@@ -16,6 +16,8 @@ import {
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/lib/auth";
 
 const mentorFormSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
@@ -31,6 +33,7 @@ type MentorFormValues = z.infer<typeof mentorFormSchema>;
 const MentorSignup = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const form = useForm<MentorFormValues>({
     resolver: zodResolver(mentorFormSchema),
@@ -42,13 +45,33 @@ const MentorSignup = () => {
     },
   });
 
-  const onSubmit = (data: MentorFormValues) => {
-    toast({
-      title: "Signup successful!",
-      description: "We'll review your application and get back to you soon.",
-    });
-    console.log("Form data:", data);
-    navigate("/");
+  const onSubmit = async (data: MentorFormValues) => {
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          full_name: data.name,
+          email: data.email,
+          expertise: data.expertise,
+          years_of_experience: parseInt(data.yearsOfExperience),
+          user_type: 'mentor'
+        })
+        .eq('id', user?.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Profile updated!",
+        description: "Your mentor profile has been created successfully.",
+      });
+      navigate("/");
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
   };
 
   return (

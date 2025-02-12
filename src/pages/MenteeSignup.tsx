@@ -15,6 +15,8 @@ import {
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/lib/auth";
 
 const menteeFormSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
@@ -28,6 +30,7 @@ type MenteeFormValues = z.infer<typeof menteeFormSchema>;
 const MenteeSignup = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const form = useForm<MenteeFormValues>({
     resolver: zodResolver(menteeFormSchema),
@@ -39,13 +42,33 @@ const MenteeSignup = () => {
     },
   });
 
-  const onSubmit = (data: MenteeFormValues) => {
-    toast({
-      title: "Signup successful!",
-      description: "We'll help you find the perfect mentor soon.",
-    });
-    console.log("Form data:", data);
-    navigate("/");
+  const onSubmit = async (data: MenteeFormValues) => {
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          full_name: data.name,
+          email: data.email,
+          interests: data.interests,
+          goals: data.goals,
+          user_type: 'mentee'
+        })
+        .eq('id', user?.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Profile updated!",
+        description: "Your mentee profile has been created successfully.",
+      });
+      navigate("/");
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
   };
 
   return (
