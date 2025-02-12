@@ -5,30 +5,50 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import * as z from "zod";
+
+const mentorFormSchema = z.object({
+  name: z.string().min(2, "Name must be at least 2 characters"),
+  email: z.string().email("Please enter a valid email address"),
+  expertise: z.string().min(2, "Please specify your area of expertise"),
+  yearsOfExperience: z.string().refine((val) => !isNaN(Number(val)) && Number(val) >= 0, {
+    message: "Years of experience must be a positive number",
+  }),
+});
+
+type MentorFormValues = z.infer<typeof mentorFormSchema>;
 
 const MentorSignup = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    expertise: "",
-    yearsOfExperience: "",
+
+  const form = useForm<MentorFormValues>({
+    resolver: zodResolver(mentorFormSchema),
+    defaultValues: {
+      name: "",
+      email: "",
+      expertise: "",
+      yearsOfExperience: "",
+    },
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    // For now, just show a success message
+  const onSubmit = (data: MentorFormValues) => {
     toast({
       title: "Signup successful!",
       description: "We'll review your application and get back to you soon.",
     });
+    console.log("Form data:", data);
     navigate("/");
-  };
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   return (
@@ -39,57 +59,69 @@ const MentorSignup = () => {
           <p className="text-gray-600 mt-2">Share your expertise and help others grow</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6 bg-white p-6 rounded-lg shadow-sm">
-          <div className="space-y-2">
-            <Label htmlFor="name">Full Name</Label>
-            <Input
-              id="name"
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 bg-white p-6 rounded-lg shadow-sm">
+            <FormField
+              control={form.control}
               name="name"
-              required
-              value={formData.name}
-              onChange={handleChange}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Full Name</FormLabel>
+                  <FormControl>
+                    <Input {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-          </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
+            <FormField
+              control={form.control}
               name="email"
-              type="email"
-              required
-              value={formData.email}
-              onChange={handleChange}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Email</FormLabel>
+                  <FormControl>
+                    <Input type="email" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-          </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="expertise">Area of Expertise</Label>
-            <Input
-              id="expertise"
+            <FormField
+              control={form.control}
               name="expertise"
-              required
-              value={formData.expertise}
-              onChange={handleChange}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Area of Expertise</FormLabel>
+                  <FormControl>
+                    <Input {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-          </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="yearsOfExperience">Years of Experience</Label>
-            <Input
-              id="yearsOfExperience"
+            <FormField
+              control={form.control}
               name="yearsOfExperience"
-              type="number"
-              required
-              value={formData.yearsOfExperience}
-              onChange={handleChange}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Years of Experience</FormLabel>
+                  <FormControl>
+                    <Input type="number" min="0" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-          </div>
 
-          <Button type="submit" className="w-full bg-purple-600 hover:bg-purple-700">
-            Submit Application
-          </Button>
-        </form>
+            <Button type="submit" className="w-full bg-purple-600 hover:bg-purple-700">
+              Submit Application
+            </Button>
+          </form>
+        </Form>
       </div>
     </div>
   );

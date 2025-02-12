@@ -3,32 +3,49 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import * as z from "zod";
+
+const menteeFormSchema = z.object({
+  name: z.string().min(2, "Name must be at least 2 characters"),
+  email: z.string().email("Please enter a valid email address"),
+  interests: z.string().min(2, "Please specify your areas of interest"),
+  goals: z.string().min(10, "Please describe your goals in more detail"),
+});
+
+type MenteeFormValues = z.infer<typeof menteeFormSchema>;
 
 const MenteeSignup = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    interests: "",
-    goals: "",
+
+  const form = useForm<MenteeFormValues>({
+    resolver: zodResolver(menteeFormSchema),
+    defaultValues: {
+      name: "",
+      email: "",
+      interests: "",
+      goals: "",
+    },
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    // For now, just show a success message
+  const onSubmit = (data: MenteeFormValues) => {
     toast({
       title: "Signup successful!",
       description: "We'll help you find the perfect mentor soon.",
     });
+    console.log("Form data:", data);
     navigate("/");
-  };
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   return (
@@ -39,56 +56,69 @@ const MenteeSignup = () => {
           <p className="text-gray-600 mt-2">Start your learning journey today</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6 bg-white p-6 rounded-lg shadow-sm">
-          <div className="space-y-2">
-            <Label htmlFor="name">Full Name</Label>
-            <Input
-              id="name"
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 bg-white p-6 rounded-lg shadow-sm">
+            <FormField
+              control={form.control}
               name="name"
-              required
-              value={formData.name}
-              onChange={handleChange}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Full Name</FormLabel>
+                  <FormControl>
+                    <Input {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-          </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
+            <FormField
+              control={form.control}
               name="email"
-              type="email"
-              required
-              value={formData.email}
-              onChange={handleChange}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Email</FormLabel>
+                  <FormControl>
+                    <Input type="email" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-          </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="interests">Areas of Interest</Label>
-            <Input
-              id="interests"
+            <FormField
+              control={form.control}
               name="interests"
-              required
-              value={formData.interests}
-              onChange={handleChange}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Areas of Interest</FormLabel>
+                  <FormControl>
+                    <Input {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-          </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="goals">Learning Goals</Label>
-            <Input
-              id="goals"
+            <FormField
+              control={form.control}
               name="goals"
-              required
-              value={formData.goals}
-              onChange={handleChange}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Learning Goals</FormLabel>
+                  <FormControl>
+                    <Input {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-          </div>
 
-          <Button type="submit" className="w-full bg-purple-600 hover:bg-purple-700">
-            Sign Up
-          </Button>
-        </form>
+            <Button type="submit" className="w-full bg-purple-600 hover:bg-purple-700">
+              Sign Up
+            </Button>
+          </form>
+        </Form>
       </div>
     </div>
   );
