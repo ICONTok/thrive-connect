@@ -11,8 +11,9 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 import { 
   Users, 
   Calendar, 
@@ -35,6 +36,8 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 const Index = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const { data: profiles } = useQuery({
     queryKey: ['profiles'],
@@ -60,10 +63,84 @@ const Index = () => {
     },
   });
 
+  const { data: mentorshipRequests } = useQuery({
+    queryKey: ['mentorshipRequests'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('mentorship_requests')
+        .select(`
+          *,
+          mentee:mentee_id(full_name, email),
+          mentor:mentor_id(full_name, email)
+        `)
+        .eq('mentor_id', user?.id)
+        .eq('status', 'pending');
+      if (error) throw error;
+      return data;
+    },
+    enabled: currentProfile?.user_type === 'mentor' || currentProfile?.user_type === 'admin',
+  });
+
+  const updateRequestMutation = useMutation({
+    mutationFn: async ({ requestId, status }: { requestId: string, status: 'accepted' | 'declined' }) => {
+      const { error } = await supabase
+        .from('mentorship_requests')
+        .update({ status })
+        .eq('id', requestId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['mentorshipRequests'] });
+      toast({
+        title: "Success",
+        description: "Mentorship request updated successfully",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to update mentorship request",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const createRequestMutation = useMutation({
+    mutationFn: async (mentorId: string) => {
+      const { error } = await supabase
+        .from('mentorship_requests')
+        .insert({
+          mentor_id: mentorId,
+          mentee_id: user?.id,
+        });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: "Mentorship request sent successfully",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to send mentorship request",
+        variant: "destructive",
+      });
+    },
+  });
+
   const mentees = profiles?.filter(p => p.user_type === 'mentee') || [];
-  const activeSessions = 12; // Placeholder for now
-  const pendingRequests = 5; // Placeholder for now
-  const tasks = 8; // Placeholder for now
+  const activeSessions = mentorshipRequests?.filter(r => r.status === 'accepted')?.length || 0;
+  const pendingRequests = mentorshipRequests?.length || 0;
+
+  const handleRequestMentorship = (mentorId: string) => {
+    createRequestMutation.mutate(mentorId);
+  };
+
+  const handleRequestUpdate = (requestId: string, status: 'accepted' | 'declined') => {
+    updateRequestMutation.mutate({ requestId, status });
+  };
 
   return (
     <SidebarProvider>
@@ -150,11 +227,11 @@ const Index = () => {
                 
                 <Card>
                   <CardHeader className="flex flex-row items-center justify-between pb-2">
-                    <CardTitle className="text-sm font-medium">Tasks</CardTitle>
+                    <CardTitle className="text-sm font-medium">Messages</CardTitle>
                     <MessageSquare className="h-4 w-4 text-purple-500" />
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold">{tasks}</div>
+                    <div className="text-2xl font-bold">0</div>
                   </CardContent>
                 </Card>
               </div>
@@ -227,7 +304,11 @@ const Index = () => {
                               </>
                             )}
                             {currentProfile?.user_type === 'mentee' && profile.user_type === 'mentor' && (
-                              <Button variant="ghost" size="icon">
+                              <Button 
+                                variant="ghost" 
+                                size="icon"
+                                onClick={() => handleRequestMentorship(profile.id)}
+                              >
                                 <UserPlus className="h-4 w-4" />
                               </Button>
                             )}
@@ -245,24 +326,37 @@ const Index = () => {
               <div className="w-80 border-l bg-white p-6">
                 <h2 className="text-lg font-semibold mb-4">Mentorship Requests</h2>
                 <div className="space-y-4">
-                  {/* Sample requests - replace with real data */}
-                  <div className="border rounded-lg p-4">
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <h3 className="font-medium">John Doe</h3>
-                        <p className="text-sm text-gray-500">Web Development</p>
-                      </div>
-                      <div className="flex space-x-2">
-                        <Button size="icon" variant="ghost" className="text-green-500">
-                          <Check className="h-4 w-4" />
-                        </Button>
-                        <Button size="icon" variant="ghost" className="text-red-500">
-                          <X className="h-4 w-4" />
-                        </Button>
+                  {mentorshipRequests?.map((request) => (
+                    <div key={request.id} className="border rounded-lg p-4">
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <h3 className="font-medium">{request.mentee.full_name}</h3>
+                          <p className="text-sm text-gray-500">{request.mentee.email}</p>
+                        </div>
+                        <div className="flex space-x-2">
+                          <Button 
+                            size="icon" 
+                            variant="ghost" 
+                            className="text-green-500"
+                            onClick={() => handleRequestUpdate(request.id, 'accepted')}
+                          >
+                            <Check className="h-4 w-4" />
+                          </Button>
+                          <Button 
+                            size="icon" 
+                            variant="ghost" 
+                            className="text-red-500"
+                            onClick={() => handleRequestUpdate(request.id, 'declined')}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                  {/* Add more request items here */}
+                  ))}
+                  {(!mentorshipRequests || mentorshipRequests.length === 0) && (
+                    <p className="text-gray-500 text-sm">No pending mentorship requests</p>
+                  )}
                 </div>
               </div>
             )}
