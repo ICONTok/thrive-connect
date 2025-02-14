@@ -1,73 +1,58 @@
 
 import { createContext, useContext, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import type { Session, User } from "@supabase/supabase-js";
-import { useNavigate } from "react-router-dom";
+import type { User } from "@supabase/supabase-js";
+import { Navigate, useLocation } from "react-router-dom";
 
 interface AuthContextType {
-  session: Session | null;
   user: User | null;
-  signOut: () => Promise<void>;
+  loading: boolean;
 }
 
-const AuthContext = createContext<AuthContextType>({
-  session: null,
-  user: null,
-  signOut: async () => {},
-});
+const AuthContext = createContext<AuthContextType>({ user: null, loading: true });
 
-export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  const [session, setSession] = useState<Session | null>(null);
+export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const navigate = useNavigate();
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Get initial session
+    // Check active sessions and sets the user
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
       setUser(session?.user ?? null);
+      setLoading(false);
     });
 
     // Listen for auth changes
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
+      setLoading(false);
     });
 
     return () => subscription.unsubscribe();
   }, []);
 
-  const signOut = async () => {
-    await supabase.auth.signOut();
-    navigate("/auth");
-  };
-
   return (
-    <AuthContext.Provider value={{ session, user, signOut }}>
-      {children}
+    <AuthContext.Provider value={{ user, loading }}>
+      {!loading && children}
     </AuthContext.Provider>
   );
-};
+}
 
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error("useAuth must be used within an AuthProvider");
+export function useAuth() {
+  return useContext(AuthContext);
+}
+
+export function RequireAuth({ children }: { children: JSX.Element }) {
+  const { user, loading } = useAuth();
+  const location = useLocation();
+
+  if (loading) {
+    return <div>Loading...</div>;
   }
-  return context;
-};
 
-export const RequireAuth = ({ children }: { children: React.ReactNode }) => {
-  const { session } = useAuth();
-  const navigate = useNavigate();
+  if (!user) {
+    return <Navigate to="/auth" state={{ from: location }} replace />;
+  }
 
-  useEffect(() => {
-    if (!session) {
-      navigate("/auth");
-    }
-  }, [session, navigate]);
-
-  return session ? <>{children}</> : null;
-};
+  return children;
+}
