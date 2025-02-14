@@ -9,6 +9,9 @@ import NotFound from "./pages/NotFound";
 import MentorSignup from "./pages/MentorSignup";
 import MenteeSignup from "./pages/MenteeSignup";
 import Auth from "./pages/Auth";
+import Messages from "./pages/Messages";
+import Blog from "./pages/Blog";
+import Connections from "./pages/Connections";
 import { AuthProvider, RequireAuth } from "./lib/auth";
 
 const queryClient = new QueryClient();
@@ -43,6 +46,30 @@ const App = () => (
               element={
                 <RequireAuth>
                   <MenteeSignup />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/messages"
+              element={
+                <RequireAuth>
+                  <Messages />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/blog"
+              element={
+                <RequireAuth>
+                  <Blog />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/connections"
+              element={
+                <RequireAuth>
+                  <Connections />
                 </RequireAuth>
               }
             />
