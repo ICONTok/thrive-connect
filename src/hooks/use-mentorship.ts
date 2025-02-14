@@ -40,8 +40,8 @@ export function useMentorship(userId: string | undefined) {
         .from('mentorship_requests')
         .select(`
           *,
-          mentee:mentee_id(id, full_name, email, user_type),
-          mentor:mentor_id(id, full_name, email, user_type)
+          mentee:profiles!mentorship_requests_mentee_id_fkey(id, full_name, email, user_type),
+          mentor:profiles!mentorship_requests_mentor_id_fkey(id, full_name, email, user_type)
         `)
         .eq('mentor_id', userId)
         .eq('status', 'pending');

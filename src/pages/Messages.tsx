@@ -23,8 +23,8 @@ const Messages = () => {
         .from('messages')
         .select(`
           *,
-          sender:sender_id(full_name),
-          receiver:receiver_id(full_name)
+          sender:profiles!messages_sender_id_fkey(full_name),
+          receiver:profiles!messages_receiver_id_fkey(full_name)
         `)
         .or(`sender_id.eq.${user?.id},receiver_id.eq.${user?.id}`)
         .order('created_at', { ascending: false });
@@ -96,7 +96,7 @@ const Messages = () => {
                         }`}
                       >
                         <p className="text-sm font-semibold mb-1">
-                          {message.sender_id === user?.id ? "You" : message.sender.full_name}
+                          {message.sender_id === user?.id ? "You" : message.sender?.full_name}
                         </p>
                         <p className="text-sm">{message.content}</p>
                       </div>
