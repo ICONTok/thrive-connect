@@ -1,53 +1,41 @@
 
-import { Users, Calendar, Bell, MessageSquare } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Users, UserPlus, CalendarDays } from "lucide-react";
 
 interface StatsCardsProps {
   menteesCount: number;
+  mentorsCount: number;
   activeSessionsCount: number;
-  pendingRequestsCount: number;
 }
 
-export function StatsCards({ menteesCount, activeSessionsCount, pendingRequestsCount }: StatsCardsProps) {
+export function StatsCards({ menteesCount, mentorsCount, activeSessionsCount }: StatsCardsProps) {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+    <div className="grid gap-4 md:grid-cols-3">
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between pb-2">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">Total Mentors</CardTitle>
+          <Users className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">{mentorsCount}</div>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Total Mentees</CardTitle>
-          <Users className="h-4 w-4 text-blue-500" />
+          <UserPlus className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">{menteesCount}</div>
         </CardContent>
       </Card>
-      
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between pb-2">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Active Sessions</CardTitle>
-          <Calendar className="h-4 w-4 text-green-500" />
+          <CalendarDays className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">{activeSessionsCount}</div>
-        </CardContent>
-      </Card>
-      
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between pb-2">
-          <CardTitle className="text-sm font-medium">Pending Requests</CardTitle>
-          <Bell className="h-4 w-4 text-yellow-500" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">{pendingRequestsCount}</div>
-        </CardContent>
-      </Card>
-      
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between pb-2">
-          <CardTitle className="text-sm font-medium">Messages</CardTitle>
-          <MessageSquare className="h-4 w-4 text-purple-500" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">0</div>
         </CardContent>
       </Card>
     </div>
