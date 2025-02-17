@@ -173,35 +173,50 @@ export type Database = {
       profiles: {
         Row: {
           created_at: string
+          district: string | null
           email: string | null
           expertise: string | null
           full_name: string | null
           goals: string | null
           id: string
           interests: string | null
+          last_name: string | null
+          local_church: string | null
+          phone_number: string | null
           user_type: string | null
+          username: string | null
           years_of_experience: number | null
         }
         Insert: {
           created_at?: string
+          district?: string | null
           email?: string | null
           expertise?: string | null
           full_name?: string | null
           goals?: string | null
           id: string
           interests?: string | null
+          last_name?: string | null
+          local_church?: string | null
+          phone_number?: string | null
           user_type?: string | null
+          username?: string | null
           years_of_experience?: number | null
         }
         Update: {
           created_at?: string
+          district?: string | null
           email?: string | null
           expertise?: string | null
           full_name?: string | null
           goals?: string | null
           id?: string
           interests?: string | null
+          last_name?: string | null
+          local_church?: string | null
+          phone_number?: string | null
           user_type?: string | null
+          username?: string | null
           years_of_experience?: number | null
         }
         Relationships: []
