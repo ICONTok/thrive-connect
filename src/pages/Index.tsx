@@ -6,33 +6,29 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { AppSidebar } from "@/components/AppSidebar";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
-import { StatsCards } from "@/components/dashboard/StatsCards";
-import { UsersTable } from "@/components/dashboard/UsersTable";
-import { MentorshipRequests } from "@/components/dashboard/MentorshipRequests";
+import { AdminDashboard } from "@/components/dashboard/AdminDashboard";
+import { MentorDashboard } from "@/components/dashboard/MentorDashboard";
+import { MenteeDashboard } from "@/components/dashboard/MenteeDashboard";
 import { useMentorship } from "@/hooks/use-mentorship";
 
 const Index = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  
-  const {
-    profiles,
-    currentProfile,
-    mentorshipRequests,
-    updateRequestMutation,
-    createRequestMutation,
-  } = useMentorship(user?.id);
+  const { currentProfile } = useMentorship(user?.id);
 
-  const mentees = profiles?.filter(p => p.user_type === 'mentee') || [];
-  const activeSessions = mentorshipRequests?.filter(r => r.status === 'accepted')?.length || 0;
-  const pendingRequests = mentorshipRequests?.length || 0;
+  const renderDashboard = () => {
+    if (!currentProfile) return null;
 
-  const handleRequestMentorship = (mentorId: string) => {
-    createRequestMutation.mutate(mentorId);
-  };
-
-  const handleRequestUpdate = (requestId: string, status: 'accepted' | 'declined') => {
-    updateRequestMutation.mutate({ requestId, status });
+    switch (currentProfile.role) {
+      case 'admin':
+        return <AdminDashboard />;
+      case 'mentor':
+        return <MentorDashboard />;
+      case 'mentee':
+        return <MenteeDashboard />;
+      default:
+        return null;
+    }
   };
 
   return (
@@ -65,39 +61,12 @@ const Index = () => {
                     <span>Blog</span>
                   </Button>
                 </div>
-                <div className="relative ml-4">
-                  <Input
-                    placeholder="Search..."
-                    className="pl-10 w-[300px] bg-gray-50"
-                  />
-                </div>
               </div>
             </div>
           </nav>
 
-          <div className="flex">
-            {/* Main Content */}
-            <div className="flex-1 p-8">
-              <StatsCards
-                menteesCount={mentees.length}
-                activeSessionsCount={activeSessions}
-                pendingRequestsCount={pendingRequests}
-              />
-
-              <UsersTable
-                profiles={profiles || []}
-                currentProfile={currentProfile}
-                onRequestMentorship={handleRequestMentorship}
-              />
-            </div>
-
-            {/* Right Sidebar - Mentorship Requests */}
-            {(currentProfile?.user_type === 'mentor' || currentProfile?.user_type === 'admin') && (
-              <MentorshipRequests
-                requests={mentorshipRequests}
-                onUpdateRequest={handleRequestUpdate}
-              />
-            )}
+          <div className="p-8">
+            {renderDashboard()}
           </div>
         </div>
       </div>

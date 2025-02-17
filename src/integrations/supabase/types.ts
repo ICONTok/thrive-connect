@@ -86,6 +86,83 @@ export type Database = {
           },
         ]
       }
+      event_participants: {
+        Row: {
+          created_at: string | null
+          event_id: string | null
+          id: string
+          participant_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          event_id?: string | null
+          id?: string
+          participant_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          event_id?: string | null
+          id?: string
+          participant_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_participants_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_participants_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      events: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          end_date: string
+          id: string
+          start_date: string
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          end_date: string
+          id?: string
+          start_date: string
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          end_date?: string
+          id?: string
+          start_date?: string
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "events_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       mentorship_requests: {
         Row: {
           created_at: string
@@ -180,9 +257,11 @@ export type Database = {
           goals: string | null
           id: string
           interests: string | null
+          is_active: boolean | null
           last_name: string | null
           local_church: string | null
           phone_number: string | null
+          role: string | null
           user_type: string | null
           username: string | null
           years_of_experience: number | null
@@ -196,9 +275,11 @@ export type Database = {
           goals?: string | null
           id: string
           interests?: string | null
+          is_active?: boolean | null
           last_name?: string | null
           local_church?: string | null
           phone_number?: string | null
+          role?: string | null
           user_type?: string | null
           username?: string | null
           years_of_experience?: number | null
@@ -212,14 +293,109 @@ export type Database = {
           goals?: string | null
           id?: string
           interests?: string | null
+          is_active?: boolean | null
           last_name?: string | null
           local_church?: string | null
           phone_number?: string | null
+          role?: string | null
           user_type?: string | null
           username?: string | null
           years_of_experience?: number | null
         }
         Relationships: []
+      }
+      shared_files: {
+        Row: {
+          created_at: string | null
+          file_url: string
+          filename: string
+          id: string
+          shared_by: string | null
+          shared_with: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          file_url: string
+          filename: string
+          id?: string
+          shared_by?: string | null
+          shared_with?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          file_url?: string
+          filename?: string
+          id?: string
+          shared_by?: string | null
+          shared_with?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shared_files_shared_by_fkey"
+            columns: ["shared_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shared_files_shared_with_fkey"
+            columns: ["shared_with"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tasks: {
+        Row: {
+          assigned_by: string | null
+          assigned_to: string | null
+          created_at: string | null
+          description: string | null
+          due_date: string | null
+          id: string
+          status: string | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          assigned_by?: string | null
+          assigned_to?: string | null
+          created_at?: string | null
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          status?: string | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          assigned_by?: string | null
+          assigned_to?: string | null
+          created_at?: string | null
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          status?: string | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tasks_assigned_by_fkey"
+            columns: ["assigned_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tasks_assigned_to_fkey"
+            columns: ["assigned_to"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {

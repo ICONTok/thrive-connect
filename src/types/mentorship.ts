@@ -4,6 +4,8 @@ export interface Profile {
   full_name: string;
   email: string;
   user_type: 'mentor' | 'mentee' | 'admin';
+  is_active: boolean;
+  role: 'admin' | 'mentor' | 'mentee';
 }
 
 export interface MentorshipRequest {
@@ -15,3 +17,47 @@ export interface MentorshipRequest {
   mentor: Profile;
 }
 
+export interface Event {
+  id: string;
+  title: string;
+  description: string | null;
+  start_date: string;
+  end_date: string;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Task {
+  id: string;
+  title: string;
+  description: string | null;
+  due_date: string | null;
+  status: string;
+  assigned_by: string;
+  assigned_to: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SharedFile {
+  id: string;
+  filename: string;
+  file_url: string;
+  shared_by: string;
+  shared_with: string;
+  created_at: string;
+}
+
+export interface BlogPost {
+  id: string;
+  title: string;
+  content: string;
+  status: string;
+  author_id: string;
+  created_at: string;
+  updated_at: string;
+  author: {
+    full_name: string;
+  };
+}
