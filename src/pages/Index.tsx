@@ -21,21 +21,34 @@ const Index = () => {
       return null;
     }
 
-    // Use user_type for dashboard selection since that's what's being set correctly
-    const userType = currentProfile.user_type?.toLowerCase();
-    console.log("Using user_type for dashboard selection:", userType);
+    // Log the full profile for debugging
+    console.log("Full profile data:", currentProfile);
 
-    switch (userType) {
-      case 'admin':
-        return <AdminDashboard />;
-      case 'mentor':
-        return <MentorDashboard />;
-      case 'mentee':
-        return <MenteeDashboard />;
-      default:
-        console.log("Unknown user_type:", userType);
-        return null;
+    // Ensure we're working with lowercase values
+    const userType = currentProfile.user_type?.toLowerCase() as 'admin' | 'mentor' | 'mentee' | null;
+
+    // Add strict type checking
+    if (!userType) {
+      console.error("User type is not set!");
+      return null;
     }
+
+    // Add debug logging
+    console.log("Rendering dashboard for user type:", userType);
+
+    // Strict type checking for each case
+    if (userType === 'admin') {
+      return <AdminDashboard />;
+    }
+    if (userType === 'mentor') {
+      return <MentorDashboard />;
+    }
+    if (userType === 'mentee') {
+      return <MenteeDashboard />;
+    }
+
+    console.error("Unknown user type:", userType);
+    return null;
   };
 
   return (

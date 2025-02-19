@@ -1,8 +1,9 @@
+
 export interface Profile {
   id: string;
   full_name: string | null;
   email: string | null;
-  user_type: string | null;
+  user_type: 'admin' | 'mentor' | 'mentee' | null;
   is_active: boolean;
   role: 'admin' | 'mentor' | 'mentee';
   expertise?: string | null;
