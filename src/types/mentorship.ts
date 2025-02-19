@@ -1,11 +1,14 @@
-
 export interface Profile {
   id: string;
-  full_name: string;
-  email: string;
-  user_type: 'mentor' | 'mentee' | 'admin';
+  full_name: string | null;
+  email: string | null;
+  user_type: string | null;
   is_active: boolean;
   role: 'admin' | 'mentor' | 'mentee';
+  expertise?: string | null;
+  interests?: string | null;
+  goals?: string | null;
+  years_of_experience?: number | null;
 }
 
 export interface MentorshipRequest {

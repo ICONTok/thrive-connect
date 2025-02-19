@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
 import { Menu, Home, Users, MessageSquare, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { AppSidebar } from "@/components/AppSidebar";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AdminDashboard } from "@/components/dashboard/AdminDashboard";
@@ -17,7 +16,12 @@ const Index = () => {
   const { currentProfile } = useMentorship(user?.id);
 
   const renderDashboard = () => {
-    if (!currentProfile) return null;
+    if (!currentProfile) {
+      console.log("No current profile found");
+      return null;
+    }
+
+    console.log("Current profile role:", currentProfile.role);
 
     switch (currentProfile.role) {
       case 'admin':
@@ -27,6 +31,7 @@ const Index = () => {
       case 'mentee':
         return <MenteeDashboard />;
       default:
+        console.log("Unknown role:", currentProfile.role);
         return null;
     }
   };
@@ -36,7 +41,6 @@ const Index = () => {
       <div className="min-h-screen bg-gray-50 flex w-full">
         <AppSidebar />
         <div className="flex-1">
-          {/* Top Navigation */}
           <nav className="bg-white border-b px-4">
             <div className="flex justify-between h-16 items-center">
               <div className="flex items-center space-x-4">

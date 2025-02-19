@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -17,10 +16,11 @@ export function useMentorship(userId: string | undefined) {
       if (error) throw error;
       return data as Profile[];
     },
+    enabled: !!userId,
   });
 
   const { data: currentProfile } = useQuery({
-    queryKey: ['currentProfile'],
+    queryKey: ['currentProfile', userId],
     queryFn: async () => {
       if (!userId) return null;
       const { data, error } = await supabase
@@ -31,6 +31,7 @@ export function useMentorship(userId: string | undefined) {
       if (error) throw error;
       return data as Profile;
     },
+    enabled: !!userId,
   });
 
   const { data: mentorshipRequests } = useQuery({
