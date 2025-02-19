@@ -21,22 +21,11 @@ const Index = () => {
       return null;
     }
 
-    console.log("Current profile:", currentProfile);
-    console.log("Current profile role:", currentProfile.role);
-    console.log("Current profile user_type:", currentProfile.user_type);
+    // Use user_type for dashboard selection since that's what's being set correctly
+    const userType = currentProfile.user_type?.toLowerCase();
+    console.log("Using user_type for dashboard selection:", userType);
 
-    // First check if we have a valid role
-    if (!currentProfile.role || !['admin', 'mentor', 'mentee'].includes(currentProfile.role)) {
-      console.log("Invalid role detected:", currentProfile.role);
-      // Fallback to user_type if role is not set correctly
-      if (currentProfile.user_type === 'admin') return <AdminDashboard />;
-      if (currentProfile.user_type === 'mentor') return <MentorDashboard />;
-      if (currentProfile.user_type === 'mentee') return <MenteeDashboard />;
-      return null;
-    }
-
-    // Use role if it's valid
-    switch (currentProfile.role) {
+    switch (userType) {
       case 'admin':
         return <AdminDashboard />;
       case 'mentor':
@@ -44,7 +33,7 @@ const Index = () => {
       case 'mentee':
         return <MenteeDashboard />;
       default:
-        console.log("Unexpected role:", currentProfile.role);
+        console.log("Unknown user_type:", userType);
         return null;
     }
   };
