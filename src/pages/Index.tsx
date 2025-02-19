@@ -21,8 +21,21 @@ const Index = () => {
       return null;
     }
 
+    console.log("Current profile:", currentProfile);
     console.log("Current profile role:", currentProfile.role);
+    console.log("Current profile user_type:", currentProfile.user_type);
 
+    // First check if we have a valid role
+    if (!currentProfile.role || !['admin', 'mentor', 'mentee'].includes(currentProfile.role)) {
+      console.log("Invalid role detected:", currentProfile.role);
+      // Fallback to user_type if role is not set correctly
+      if (currentProfile.user_type === 'admin') return <AdminDashboard />;
+      if (currentProfile.user_type === 'mentor') return <MentorDashboard />;
+      if (currentProfile.user_type === 'mentee') return <MenteeDashboard />;
+      return null;
+    }
+
+    // Use role if it's valid
     switch (currentProfile.role) {
       case 'admin':
         return <AdminDashboard />;
@@ -31,7 +44,7 @@ const Index = () => {
       case 'mentee':
         return <MenteeDashboard />;
       default:
-        console.log("Unknown role:", currentProfile.role);
+        console.log("Unexpected role:", currentProfile.role);
         return null;
     }
   };
