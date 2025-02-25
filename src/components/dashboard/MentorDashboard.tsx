@@ -4,12 +4,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MentorshipRequests } from "@/components/dashboard/MentorshipRequests";
 import { EventForm } from "@/components/dashboard/EventForm";
-import { Plus } from "lucide-react";
+import { Plus, UserCheck } from "lucide-react";
 import { useMentorship } from "@/hooks/use-mentorship";
 import { useAuth } from "@/lib/auth";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import type { Event } from "@/types/mentorship";
+import type { Event, Profile } from "@/types/mentorship";
 
 export function MentorDashboard() {
   const { user } = useAuth();
@@ -36,6 +36,23 @@ export function MentorDashboard() {
     enabled: !!user?.id,
   });
 
+  const { data: acceptedMentees } = useQuery({
+    queryKey: ['accepted-mentees', user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('mentorship_requests')
+        .select(`
+          mentee:profiles!mentorship_requests_mentee_id_fkey(*)
+        `)
+        .eq('mentor_id', user?.id)
+        .eq('status', 'accepted');
+      
+      if (error) throw error;
+      return data?.map(r => r.mentee) as Profile[];
+    },
+    enabled: !!user?.id,
+  });
+
   const handleRequestUpdate = (requestId: string, status: 'accepted' | 'declined') => {
     updateRequestMutation.mutate({ requestId, status });
   };
@@ -53,7 +70,27 @@ export function MentorDashboard() {
             <CardTitle>My Mentees</CardTitle>
           </CardHeader>
           <CardContent>
-            {/* Mentees list will go here */}
+            <div className="space-y-4">
+              {acceptedMentees?.map((mentee) => (
+                <Card key={mentee.id}>
+                  <CardContent className="p-4 flex items-center justify-between">
+                    <div>
+                      <h4 className="font-semibold">{mentee.full_name}</h4>
+                      <p className="text-sm text-gray-500">{mentee.email}</p>
+                      {mentee.interests && (
+                        <p className="text-sm text-gray-600 mt-1">
+                          Interests: {mentee.interests}
+                        </p>
+                      )}
+                    </div>
+                    <UserCheck className="text-green-500 h-5 w-5" />
+                  </CardContent>
+                </Card>
+              ))}
+              {(!acceptedMentees || acceptedMentees.length === 0) && (
+                <p className="text-center text-gray-500">No active mentees yet</p>
+              )}
+            </div>
           </CardContent>
         </Card>
 
