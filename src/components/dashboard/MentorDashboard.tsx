@@ -1,5 +1,4 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MentorshipRequests } from "@/components/dashboard/MentorshipRequests";
@@ -9,10 +8,12 @@ import { useMentorship } from "@/hooks/use-mentorship";
 import { useAuth } from "@/lib/auth";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import type { Event, Profile } from "@/types/mentorship";
+import { useToast } from "@/hooks/use-toast";
+import type { Event, Profile, MentorshipRequest } from "@/types/mentorship";
 
 export function MentorDashboard() {
   const { user } = useAuth();
+  const { toast } = useToast();
   const queryClient = useQueryClient();
   const {
     mentorshipRequests,
@@ -20,6 +21,34 @@ export function MentorDashboard() {
   } = useMentorship(user?.id);
 
   const [showEventForm, setShowEventForm] = useState(false);
+
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const channel = supabase
+      .channel('mentor-dashboard')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'mentorship_requests',
+          filter: `mentor_id=eq.${user.id}`,
+        },
+        (payload) => {
+          queryClient.invalidateQueries({ queryKey: ['mentorshipRequests'] });
+          toast({
+            title: "New Mentorship Request",
+            description: "You have received a new mentorship request",
+          });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user?.id, queryClient, toast]);
 
   const { data: events } = useQuery({
     queryKey: ['mentor-events', user?.id],
@@ -53,8 +82,29 @@ export function MentorDashboard() {
     enabled: !!user?.id,
   });
 
-  const handleRequestUpdate = (requestId: string, status: 'accepted' | 'declined') => {
-    updateRequestMutation.mutate({ requestId, status });
+  const handleRequestUpdate = async (requestId: string, status: 'accepted' | 'declined') => {
+    updateRequestMutation.mutate(
+      { requestId, status },
+      {
+        onSuccess: async () => {
+          if (status === 'accepted') {
+            const request = mentorshipRequests?.find(r => r.id === requestId);
+            if (request) {
+              await supabase.from('messages').insert({
+                sender_id: user?.id,
+                receiver_id: request.mentee_id,
+                content: `Your mentorship request has been accepted! Welcome to the program.`
+              });
+            }
+          }
+          
+          toast({
+            title: "Request Updated",
+            description: `Mentorship request ${status}`,
+          });
+        }
+      }
+    );
   };
 
   const handleEventCreated = () => {
