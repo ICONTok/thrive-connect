@@ -7,7 +7,6 @@ import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   Form,
   FormControl,
@@ -29,9 +28,6 @@ const signUpSchema = z.object({
   district: z.string().min(2, "District/Zone is required"),
   localChurch: z.string().min(2, "Local church is required"),
   username: z.string().min(3, "Username must be at least 3 characters"),
-  userType: z.enum(["mentor", "mentee"], {
-    required_error: "Please select your role",
-  }),
   areaOfInterest: z.string().min(2, "Area of interest is required"),
 });
 
@@ -71,7 +67,7 @@ const Register = () => {
             district: data.district,
             local_church: data.localChurch,
             username: data.username,
-            user_type: data.userType,
+            user_type: 'mentee', // Default to mentee
             interests: data.areaOfInterest,
           },
         },
@@ -101,8 +97,8 @@ const Register = () => {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-purple-50 to-white py-12 px-4 sm:px-6 lg:px-8">
       <Card className="w-full max-w-md">
         <CardHeader>
-          <h1 className="text-2xl font-bold text-center">Create Your Account</h1>
-          <p className="text-center text-gray-500">Join our mentorship platform</p>
+          <h1 className="text-2xl font-bold text-center">Join Thrive</h1>
+          <p className="text-center text-gray-500">Create your account</p>
         </CardHeader>
         <CardContent>
           <Form {...form}>
@@ -229,41 +225,6 @@ const Register = () => {
                     <FormLabel>Area of Interest</FormLabel>
                     <FormControl>
                       <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="userType"
-                render={({ field }) => (
-                  <FormItem className="space-y-3">
-                    <FormLabel>I want to be a:</FormLabel>
-                    <FormControl>
-                      <RadioGroup
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                        className="flex flex-col space-y-1"
-                      >
-                        <FormItem className="flex items-center space-x-3 space-y-0">
-                          <FormControl>
-                            <RadioGroupItem value="mentor" />
-                          </FormControl>
-                          <FormLabel className="font-normal">
-                            Mentor
-                          </FormLabel>
-                        </FormItem>
-                        <FormItem className="flex items-center space-x-3 space-y-0">
-                          <FormControl>
-                            <RadioGroupItem value="mentee" />
-                          </FormControl>
-                          <FormLabel className="font-normal">
-                            Mentee
-                          </FormLabel>
-                        </FormItem>
-                      </RadioGroup>
                     </FormControl>
                     <FormMessage />
                   </FormItem>

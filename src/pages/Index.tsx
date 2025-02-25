@@ -43,12 +43,7 @@ const Index = () => {
     if (userType === 'mentor') {
       return <MentorDashboard />;
     }
-    if (userType === 'mentee') {
-      return <MenteeDashboard />;
-    }
-
-    console.error("Unknown user type:", userType);
-    return null;
+    return <MenteeDashboard />;
   };
 
   return (
@@ -62,6 +57,7 @@ const Index = () => {
                 <SidebarTrigger>
                   <Menu className="h-6 w-6 text-gray-600" />
                 </SidebarTrigger>
+                <h1 className="text-xl font-bold text-gray-900">Thrive</h1>
                 <div className="flex items-center space-x-6">
                   <Button variant="ghost" className="flex items-center space-x-2" onClick={() => navigate('/')}>
                     <Home className="h-5 w-5" />

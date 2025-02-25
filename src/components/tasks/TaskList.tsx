@@ -37,7 +37,7 @@ export const TaskList = () => {
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
                 <span>{task.title}</span>
-                <Badge variant={task.status === "completed" ? "success" : "default"}>
+                <Badge variant={task.status === "completed" ? "secondary" : "default"}>
                   {task.status}
                 </Badge>
               </CardTitle>
