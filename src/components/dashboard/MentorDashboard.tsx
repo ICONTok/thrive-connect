@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -65,7 +66,7 @@ export function MentorDashboard() {
     enabled: !!user?.id,
   });
 
-  const { data: acceptedMentees } = useQuery({
+  const { data: acceptedMentees, isLoading: menteeLoading } = useQuery({
     queryKey: ['accepted-mentees', user?.id],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -77,6 +78,7 @@ export function MentorDashboard() {
         .eq('status', 'accepted');
       
       if (error) throw error;
+      console.log("Accepted mentees data:", data);
       return data?.map(r => r.mentee) as Profile[];
     },
     enabled: !!user?.id,
@@ -96,6 +98,8 @@ export function MentorDashboard() {
                 content: `Your mentorship request has been accepted! Welcome to the program.`
               });
             }
+            // Invalidate the accepted mentees query to refresh the list
+            queryClient.invalidateQueries({ queryKey: ['accepted-mentees'] });
           }
           
           toast({
@@ -113,34 +117,39 @@ export function MentorDashboard() {
   };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-      <div className="md:col-span-2 space-y-6">
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="md:col-span-2 space-y-4">
         <Card>
           <CardHeader>
             <CardTitle>My Mentees</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {acceptedMentees?.map((mentee) => (
-                <Card key={mentee.id}>
-                  <CardContent className="p-4 flex items-center justify-between">
-                    <div>
-                      <h4 className="font-semibold">{mentee.full_name}</h4>
-                      <p className="text-sm text-gray-500">{mentee.email}</p>
-                      {mentee.interests && (
-                        <p className="text-sm text-gray-600 mt-1">
-                          Interests: {mentee.interests}
-                        </p>
-                      )}
-                    </div>
-                    <UserCheck className="text-green-500 h-5 w-5" />
-                  </CardContent>
-                </Card>
-              ))}
-              {(!acceptedMentees || acceptedMentees.length === 0) && (
-                <p className="text-center text-gray-500">No active mentees yet</p>
-              )}
-            </div>
+            {menteeLoading ? (
+              <p className="text-center py-4">Loading mentees...</p>
+            ) : (
+              <div className="space-y-3">
+                {acceptedMentees && acceptedMentees.length > 0 ? (
+                  acceptedMentees.map((mentee) => (
+                    <Card key={mentee.id} className="shadow-sm hover:shadow transition-shadow">
+                      <CardContent className="p-4 flex items-center justify-between">
+                        <div>
+                          <h4 className="font-semibold">{mentee.full_name}</h4>
+                          <p className="text-sm text-gray-500">{mentee.email}</p>
+                          {mentee.interests && (
+                            <p className="text-sm text-gray-600 mt-1">
+                              Interests: {mentee.interests}
+                            </p>
+                          )}
+                        </div>
+                        <UserCheck className="text-green-500 h-5 w-5" />
+                      </CardContent>
+                    </Card>
+                  ))
+                ) : (
+                  <p className="text-center text-gray-500 py-6">No active mentees yet</p>
+                )}
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -159,11 +168,11 @@ export function MentorDashboard() {
             {showEventForm ? (
               <EventForm onSuccess={handleEventCreated} />
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-3">
                 {events?.map((event) => (
-                  <Card key={event.id}>
-                    <CardHeader>
-                      <CardTitle>{event.title}</CardTitle>
+                  <Card key={event.id} className="shadow-sm hover:shadow transition-shadow">
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-lg">{event.title}</CardTitle>
                     </CardHeader>
                     <CardContent>
                       <p>{event.description}</p>
@@ -175,7 +184,7 @@ export function MentorDashboard() {
                   </Card>
                 ))}
                 {events?.length === 0 && (
-                  <p className="text-gray-500 text-center">No events created yet</p>
+                  <p className="text-gray-500 text-center py-6">No events created yet</p>
                 )}
               </div>
             )}

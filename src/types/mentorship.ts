@@ -19,6 +19,8 @@ export interface MentorshipRequest {
   status: 'pending' | 'accepted' | 'declined';
   mentee: Profile;
   mentor: Profile;
+  message?: string | null;
+  created_at: string;
 }
 
 export interface Event {

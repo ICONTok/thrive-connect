@@ -4,7 +4,6 @@ import {
   SidebarContent,
   SidebarGroup,
   SidebarGroupContent,
-  SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
@@ -17,9 +16,11 @@ import {
   Bell,
   Settings,
   LogOut,
+  BookOpen,
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
+import { cn } from "@/lib/utils";
 
 const menuItems = [
   {
@@ -28,9 +29,14 @@ const menuItems = [
     url: "/",
   },
   {
-    title: "Users",
+    title: "Connections",
     icon: Users,
-    url: "/users",
+    url: "/connections",
+  },
+  {
+    title: "Messages",
+    icon: MessageSquare,
+    url: "/messages",
   },
   {
     title: "Calendar",
@@ -38,9 +44,9 @@ const menuItems = [
     url: "/calendar",
   },
   {
-    title: "Messages",
-    icon: MessageSquare,
-    url: "/messages",
+    title: "Blog",
+    icon: BookOpen,
+    url: "/blog",
   },
   {
     title: "Notifications",
@@ -56,6 +62,7 @@ const menuItems = [
 
 export function AppSidebar() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { signOut } = useAuth();
 
   return (
@@ -71,7 +78,12 @@ export function AppSidebar() {
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton
                     onClick={() => navigate(item.url)}
-                    className="flex items-center space-x-2 px-4 py-2 w-full hover:bg-gray-100 rounded-lg"
+                    className={cn(
+                      "flex items-center space-x-2 px-4 py-2 w-full rounded-lg",
+                      location.pathname === item.url
+                        ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                        : "hover:bg-gray-100"
+                    )}
                   >
                     <item.icon className="h-5 w-5" />
                     <span>{item.title}</span>
@@ -81,7 +93,7 @@ export function AppSidebar() {
               <SidebarMenuItem>
                 <SidebarMenuButton
                   onClick={() => signOut()}
-                  className="flex items-center space-x-2 px-4 py-2 w-full hover:bg-gray-100 rounded-lg text-red-600"
+                  className="flex items-center space-x-2 px-4 py-2 w-full hover:bg-gray-100 rounded-lg text-red-600 mt-4"
                 >
                   <LogOut className="h-5 w-5" />
                   <span>Sign Out</span>

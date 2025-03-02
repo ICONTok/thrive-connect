@@ -15,6 +15,7 @@ import Messages from "./pages/Messages";
 import Blog from "./pages/Blog";
 import Connections from "./pages/Connections";
 import { AuthProvider, RequireAuth } from "./lib/auth";
+import { MainLayout } from "./components/layout/MainLayout";
 
 const queryClient = new QueryClient();
 
@@ -41,7 +42,9 @@ const App = () => (
               path="/mentor-signup"
               element={
                 <RequireAuth>
-                  <MentorSignup />
+                  <MainLayout>
+                    <MentorSignup />
+                  </MainLayout>
                 </RequireAuth>
               }
             />
@@ -49,7 +52,9 @@ const App = () => (
               path="/mentee-signup"
               element={
                 <RequireAuth>
-                  <MenteeSignup />
+                  <MainLayout>
+                    <MenteeSignup />
+                  </MainLayout>
                 </RequireAuth>
               }
             />
@@ -57,7 +62,9 @@ const App = () => (
               path="/messages"
               element={
                 <RequireAuth>
-                  <Messages />
+                  <MainLayout>
+                    <Messages />
+                  </MainLayout>
                 </RequireAuth>
               }
             />
@@ -65,7 +72,9 @@ const App = () => (
               path="/blog"
               element={
                 <RequireAuth>
-                  <Blog />
+                  <MainLayout>
+                    <Blog />
+                  </MainLayout>
                 </RequireAuth>
               }
             />
@@ -73,7 +82,9 @@ const App = () => (
               path="/connections"
               element={
                 <RequireAuth>
-                  <Connections />
+                  <MainLayout>
+                    <Connections />
+                  </MainLayout>
                 </RequireAuth>
               }
             />
