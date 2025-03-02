@@ -10,8 +10,8 @@ const Auth = () => {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-purple-50 to-white py-12 px-4 sm:px-6 lg:px-8">
       <Card className="w-full max-w-md">
         <CardHeader>
-          <h1 className="text-2xl font-bold text-center">Welcome to Mentorship</h1>
-          <p className="text-center text-gray-500">Connect with mentors and grow together</p>
+          <h1 className="text-2xl font-bold text-center">Welcome to Thrive</h1>
+          <p className="text-center text-gray-500">A foursquare youth platform to connect with mentors and grow together</p>
         </CardHeader>
         <CardContent className="space-y-4">
           <Button 
