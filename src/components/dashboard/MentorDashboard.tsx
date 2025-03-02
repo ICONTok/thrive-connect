@@ -66,20 +66,40 @@ export function MentorDashboard() {
     enabled: !!user?.id,
   });
 
+  // Updated query to properly fetch accepted mentees
   const { data: acceptedMentees, isLoading: menteeLoading } = useQuery({
     queryKey: ['accepted-mentees', user?.id],
     queryFn: async () => {
+      console.log("Fetching accepted mentees for mentor:", user?.id);
+      
       const { data, error } = await supabase
         .from('mentorship_requests')
         .select(`
-          mentee:profiles!mentorship_requests_mentee_id_fkey(*)
+          id,
+          mentee:mentee_id(
+            id,
+            full_name,
+            email,
+            interests,
+            goals,
+            user_type
+          )
         `)
         .eq('mentor_id', user?.id)
         .eq('status', 'accepted');
       
-      if (error) throw error;
-      console.log("Accepted mentees data:", data);
-      return data?.map(r => r.mentee) as Profile[];
+      if (error) {
+        console.error("Error fetching mentees:", error);
+        throw error;
+      }
+      
+      console.log("Raw mentees data:", data);
+      
+      // Extract the mentee profiles from the response
+      const mentees = data.map(item => item.mentee);
+      console.log("Processed mentees:", mentees);
+      
+      return mentees as Profile[];
     },
     enabled: !!user?.id,
   });
@@ -117,7 +137,7 @@ export function MentorDashboard() {
   };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full">
       <div className="md:col-span-2 space-y-4">
         <Card>
           <CardHeader>
@@ -138,6 +158,11 @@ export function MentorDashboard() {
                           {mentee.interests && (
                             <p className="text-sm text-gray-600 mt-1">
                               Interests: {mentee.interests}
+                            </p>
+                          )}
+                          {mentee.goals && (
+                            <p className="text-sm text-gray-600">
+                              Goals: {mentee.goals}
                             </p>
                           )}
                         </div>

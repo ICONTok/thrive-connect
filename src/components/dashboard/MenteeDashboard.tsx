@@ -38,13 +38,21 @@ export function MenteeDashboard() {
       const { data, error } = await supabase
         .from('mentorship_requests')
         .select(`
-          mentor:profiles!mentorship_requests_mentor_id_fkey(*)
+          mentor:mentor_id(
+            id,
+            full_name,
+            email,
+            expertise,
+            user_type
+          )
         `)
         .eq('mentee_id', user?.id)
         .eq('status', 'accepted');
       
       if (error) throw error;
-      return data?.map(r => r.mentor) as Profile[];
+      const mentors = data.map(item => item.mentor);
+      console.log("My mentors:", mentors);
+      return mentors as Profile[];
     },
     enabled: !!user?.id,
   });
@@ -104,7 +112,7 @@ export function MenteeDashboard() {
   };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full">
       <div className="md:col-span-2 space-y-6">
         <Card>
           <CardHeader>

@@ -54,11 +54,11 @@ const BlogPostForm = ({ initialData, onSubmit, onCancel, isSubmitting }: BlogPos
       <div>
         <Label htmlFor="content">Content</Label>
         <Editor
-          apiKey="no-api-key"
+          apiKey="no-api-key-needed"
           initialValue={formData.content}
           init={{
             height: 400,
-            menubar: false,
+            menubar: true,
             plugins: [
               'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
               'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
@@ -67,8 +67,30 @@ const BlogPostForm = ({ initialData, onSubmit, onCancel, isSubmitting }: BlogPos
             toolbar: 'undo redo | blocks | ' +
               'bold italic forecolor | alignleft aligncenter ' +
               'alignright alignjustify | bullist numlist outdent indent | ' +
-              'removeformat | help',
-            content_style: 'body { font-family:Helvetica,Arial,sans-serif; font-size:14px }'
+              'image media link | removeformat | help',
+            content_style: 'body { font-family:Helvetica,Arial,sans-serif; font-size:14px }',
+            // Allow local images in demo mode without API key
+            images_upload_handler: function (blobInfo, progress) {
+              return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(blobInfo.blob());
+                reader.onloadend = function() {
+                  resolve(reader.result as string);
+                };
+                reader.onerror = function() {
+                  reject('Error reading file');
+                };
+              });
+            },
+            // Disable API key warning
+            setup: function (editor) {
+              editor.on('init', function () {
+                const warningElement = document.querySelector('.tox-notifications');
+                if (warningElement) {
+                  warningElement.remove();
+                }
+              });
+            }
           }}
           onEditorChange={(content) => {
             setFormData(prev => ({ ...prev, content }));

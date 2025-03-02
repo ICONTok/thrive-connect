@@ -43,7 +43,9 @@ const Index = () => {
 
   return (
     <MainLayout>
-      {renderDashboard()}
+      <div className="w-full">
+        {renderDashboard()}
+      </div>
     </MainLayout>
   );
 };
