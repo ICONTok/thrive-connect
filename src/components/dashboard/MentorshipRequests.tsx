@@ -10,7 +10,7 @@ interface MentorshipRequestsProps {
 
 export function MentorshipRequests({ requests, onUpdateRequest }: MentorshipRequestsProps) {
   return (
-    <div className="w-80 border-l bg-white p-6">
+    <div className="w-full border bg-white p-6 rounded-lg shadow">
       <h2 className="text-lg font-semibold mb-4">Mentorship Requests</h2>
       <div className="space-y-4">
         {requests?.map((request) => (

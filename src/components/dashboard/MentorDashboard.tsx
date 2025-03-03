@@ -19,6 +19,10 @@ export function MentorDashboard() {
     queryClient.invalidateQueries({ queryKey: ['mentor-events'] });
   };
 
+  const onUpdateRequest = (requestId: string, status: 'accepted' | 'declined') => {
+    handleRequestUpdate({ id: requestId, status });
+  };
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full max-w-full">
       <div className="md:col-span-2 space-y-4 w-full">
@@ -35,7 +39,7 @@ export function MentorDashboard() {
       <div className="w-full">
         <MentorshipRequests
           requests={mentorshipRequests}
-          onUpdateRequest={handleRequestUpdate}
+          onUpdateRequest={onUpdateRequest}
         />
       </div>
     </div>

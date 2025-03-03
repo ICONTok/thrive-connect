@@ -43,7 +43,7 @@ const Index = () => {
 
   return (
     <MainLayout>
-      <div className="w-full">
+      <div className="w-full max-w-full">
         {renderDashboard()}
       </div>
     </MainLayout>

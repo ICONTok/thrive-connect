@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useMentorship } from "@/hooks/use-mentorship";
@@ -38,7 +37,7 @@ export function MenteeDashboard() {
       const { data, error } = await supabase
         .from('mentorship_requests')
         .select(`
-          mentor:mentor_id(
+          mentor:profiles!mentorship_requests_mentor_id_fkey(
             id,
             full_name,
             email,
@@ -50,9 +49,8 @@ export function MenteeDashboard() {
         .eq('status', 'accepted');
       
       if (error) throw error;
-      const mentors = data.map(item => item.mentor);
-      console.log("My mentors:", mentors);
-      return mentors as Profile[];
+      const mentors = data.map(item => item.mentor) as Profile[];
+      return mentors;
     },
     enabled: !!user?.id,
   });
@@ -112,18 +110,18 @@ export function MenteeDashboard() {
   };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full">
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-full">
       <div className="md:col-span-2 space-y-6">
-        <Card>
+        <Card className="w-full">
           <CardHeader>
             <CardTitle>Available Mentors</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid gap-4">
               {availableMentors?.map((mentor) => (
-                <Card key={mentor.id}>
+                <Card key={mentor.id} className="w-full">
                   <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between flex-wrap gap-4">
                       <div>
                         <h4 className="font-semibold">{mentor.full_name}</h4>
                         <p className="text-sm text-gray-500">{mentor.email}</p>
@@ -147,11 +145,14 @@ export function MenteeDashboard() {
                   </CardContent>
                 </Card>
               ))}
+              {(!availableMentors || availableMentors.length === 0) && (
+                <p className="text-center text-gray-500">No mentors available</p>
+              )}
             </div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="w-full">
           <CardHeader>
             <CardTitle>My Tasks</CardTitle>
           </CardHeader>
@@ -178,8 +179,8 @@ export function MenteeDashboard() {
         </Card>
       </div>
 
-      <div className="space-y-6">
-        <Card>
+      <div className="space-y-6 w-full">
+        <Card className="w-full">
           <CardHeader>
             <CardTitle>My Mentors</CardTitle>
           </CardHeader>
@@ -205,7 +206,7 @@ export function MenteeDashboard() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="w-full">
           <CardHeader>
             <CardTitle className="flex items-center">
               <Calendar className="h-5 w-5 mr-2" />

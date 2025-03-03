@@ -1,11 +1,10 @@
 
-// First ensure the correct Profile type is used and properly cast the supabase response
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
-import { Profile } from "@/types/mentorship";
+import { Profile, MentorshipRequest } from "@/types/mentorship";
 
 export function useMentorDashboard() {
   const { user } = useAuth();
@@ -25,13 +24,17 @@ export function useMentorDashboard() {
         .from("mentorship_requests")
         .select(`
           *,
-          mentee:profiles!mentorship_requests_mentee_id_fkey(id, full_name, email, bio, user_type)
+          mentee:profiles!mentorship_requests_mentee_id_fkey(id, full_name, email, user_type, is_active)
         `)
         .eq("mentor_id", user?.id || "")
         .eq("status", "pending");
 
       if (error) throw error;
-      return data;
+      // Add the missing 'mentor' property required by MentorshipRequest type
+      return data.map(request => ({
+        ...request,
+        mentor: {} as Profile // Adding empty object as mentor to satisfy TypeScript
+      })) as MentorshipRequest[];
     },
     enabled: !!user?.id,
   });
@@ -46,7 +49,7 @@ export function useMentorDashboard() {
       const { data, error } = await supabase
         .from("events")
         .select("*")
-        .eq("mentor_id", user?.id || "");
+        .eq("created_by", user?.id || "");
 
       if (error) throw error;
       return data;
@@ -64,7 +67,7 @@ export function useMentorDashboard() {
       const { data, error } = await supabase
         .from("mentorship_requests")
         .select(`
-          mentee:profiles!mentorship_requests_mentee_id_fkey(*)
+          mentee:profiles!mentorship_requests_mentee_id_fkey(id, full_name, email, user_type, is_active, interests, goals)
         `)
         .eq("mentor_id", user?.id || "")
         .eq("status", "accepted");
@@ -72,8 +75,7 @@ export function useMentorDashboard() {
       if (error) throw error;
       
       // Cast and extract the mentee profiles correctly
-      const mentees = data.map(item => item.mentee) as Profile[];
-      return mentees;
+      return data.map(item => item.mentee) as Profile[];
     },
     enabled: !!user?.id,
   });
