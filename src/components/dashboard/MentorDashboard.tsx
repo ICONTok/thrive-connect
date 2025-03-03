@@ -20,8 +20,8 @@ export function MentorDashboard() {
   };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full">
-      <div className="md:col-span-2 space-y-4">
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full max-w-full">
+      <div className="md:col-span-2 space-y-4 w-full">
         <MenteesList 
           mentees={acceptedMentees} 
           isLoading={menteeLoading} 
@@ -32,7 +32,7 @@ export function MentorDashboard() {
         />
       </div>
 
-      <div>
+      <div className="w-full">
         <MentorshipRequests
           requests={mentorshipRequests}
           onUpdateRequest={handleRequestUpdate}

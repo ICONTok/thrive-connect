@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation, Routes, Route } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
@@ -10,8 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Plus, Edit, Trash, Search, Filter } from "lucide-react";
-import { AppSidebar } from "@/components/AppSidebar";
-import { SidebarProvider } from "@/components/ui/sidebar";
+import { MainLayout } from "@/components/layout/MainLayout";
 import { BlogPost } from "@/types/mentorship";
 import BlogPostDetail from "@/components/blog/BlogPost";
 import BlogPostForm from "@/components/blog/BlogPostForm";
@@ -47,7 +45,6 @@ const BlogList = () => {
 
   useEffect(() => {
     if (posts) {
-      // Extract all unique categories from posts
       const categories = new Set<string>();
       posts.forEach(post => {
         if (post.categories) {
@@ -157,12 +154,10 @@ const BlogList = () => {
   };
 
   const filteredPosts = posts?.filter(post => {
-    // Apply search filter
     const matchesSearch = 
       post.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
       post.content.toLowerCase().includes(searchQuery.toLowerCase());
     
-    // Apply category filter if any categories are selected
     const matchesCategory = selectedCategories.length === 0 || 
       (post.categories && selectedCategories.some(category => 
         post.categories?.toLowerCase().includes(category.toLowerCase())
@@ -172,7 +167,7 @@ const BlogList = () => {
   });
 
   return (
-    <div className="flex-1 p-8">
+    <div className="w-full max-w-full px-0">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Blog Posts</h1>
         <Button onClick={() => setIsCreateDialogOpen(true)}>
@@ -251,7 +246,7 @@ const BlogList = () => {
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {filteredPosts?.map((post) => (
             <Card key={post.id} className="h-full flex flex-col">
               <CardHeader>
@@ -346,15 +341,12 @@ const BlogList = () => {
 
 const BlogPage = () => {
   return (
-    <SidebarProvider>
-      <div className="min-h-screen bg-gray-50 flex">
-        <AppSidebar />
-        <Routes>
-          <Route path="/" element={<BlogList />} />
-          <Route path="/:id" element={<BlogPostDetail />} />
-        </Routes>
-      </div>
-    </SidebarProvider>
+    <MainLayout>
+      <Routes>
+        <Route path="/" element={<BlogList />} />
+        <Route path="/:id" element={<BlogPostDetail />} />
+      </Routes>
+    </MainLayout>
   );
 };
 

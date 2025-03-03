@@ -17,9 +17,9 @@ export function MainLayout({ children }: MainLayoutProps) {
     <SidebarProvider>
       <div className="min-h-screen bg-gray-50 flex w-full">
         <AppSidebar />
-        <div className="flex-1 flex flex-col">
-          <nav className="bg-white border-b px-4 sticky top-0 z-10 shadow-sm">
-            <div className="flex justify-between h-16 items-center">
+        <div className="flex-1 flex flex-col w-full">
+          <nav className="bg-white border-b px-4 sticky top-0 z-10 shadow-sm w-full">
+            <div className="flex justify-between h-16 items-center max-w-full mx-auto">
               <div className="flex items-center space-x-4">
                 <SidebarTrigger>
                   <Menu className="h-6 w-6 text-gray-600" />
@@ -61,8 +61,10 @@ export function MainLayout({ children }: MainLayoutProps) {
             </div>
           </nav>
 
-          <div className="flex-1 p-4 md:p-6 overflow-auto">
-            {children}
+          <div className="flex-1 p-4 md:p-6 overflow-auto w-full max-w-full">
+            <div className="w-full max-w-full mx-auto">
+              {children}
+            </div>
           </div>
         </div>
       </div>

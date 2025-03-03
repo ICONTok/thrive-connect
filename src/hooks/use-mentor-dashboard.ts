@@ -1,130 +1,137 @@
 
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+// First ensure the correct Profile type is used and properly cast the supabase response
+import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useMentorship } from "@/hooks/use-mentorship";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
-import { useEffect } from "react";
-import type { Event, Profile } from "@/types/mentorship";
+import { Profile } from "@/types/mentorship";
 
 export function useMentorDashboard() {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { mentorshipRequests, updateRequestMutation } = useMentorship(user?.id);
+  const [isAccepting, setIsAccepting] = useState(false);
+  const [isDeclining, setIsDeclining] = useState(false);
 
-  useEffect(() => {
-    if (!user?.id) return;
-
-    const channel = supabase
-      .channel('mentor-dashboard')
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'mentorship_requests',
-          filter: `mentor_id=eq.${user.id}`,
-        },
-        (payload) => {
-          queryClient.invalidateQueries({ queryKey: ['mentorshipRequests'] });
-          toast({
-            title: "New Mentorship Request",
-            description: "You have received a new mentorship request",
-          });
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [user?.id, queryClient, toast]);
-
-  const { data: events } = useQuery({
-    queryKey: ['mentor-events', user?.id],
+  // Query to get all mentorship requests
+  const {
+    data: mentorshipRequests,
+    isLoading: requestsLoading,
+  } = useQuery({
+    queryKey: ["mentorship-requests"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('events')
-        .select('*')
-        .eq('created_by', user?.id)
-        .order('start_date', { ascending: true });
-      
+        .from("mentorship_requests")
+        .select(`
+          *,
+          mentee:profiles!mentorship_requests_mentee_id_fkey(id, full_name, email, bio, user_type)
+        `)
+        .eq("mentor_id", user?.id || "")
+        .eq("status", "pending");
+
       if (error) throw error;
-      return data as Event[];
+      return data;
     },
     enabled: !!user?.id,
   });
 
-  const { data: acceptedMentees, isLoading: menteeLoading } = useQuery({
-    queryKey: ['accepted-mentees', user?.id],
+  // Query to get all events
+  const {
+    data: events,
+    isLoading: eventsLoading,
+  } = useQuery({
+    queryKey: ["mentor-events"],
     queryFn: async () => {
-      console.log("Fetching accepted mentees for mentor:", user?.id);
-      
       const { data, error } = await supabase
-        .from('mentorship_requests')
+        .from("events")
+        .select("*")
+        .eq("mentor_id", user?.id || "");
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user?.id,
+  });
+
+  // Query to get all accepted mentees
+  const {
+    data: acceptedMentees,
+    isLoading: menteeLoading,
+  } = useQuery({
+    queryKey: ["accepted-mentees"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("mentorship_requests")
         .select(`
-          id,
-          mentee:mentee_id(
-            id,
-            full_name,
-            email,
-            interests,
-            goals,
-            user_type
-          )
+          mentee:profiles!mentorship_requests_mentee_id_fkey(*)
         `)
-        .eq('mentor_id', user?.id)
-        .eq('status', 'accepted');
+        .eq("mentor_id", user?.id || "")
+        .eq("status", "accepted");
+
+      if (error) throw error;
       
-      if (error) {
-        console.error("Error fetching mentees:", error);
-        throw error;
-      }
-      
-      console.log("Raw mentees data:", data);
-      
-      // Extract the mentee profiles from the response
+      // Cast and extract the mentee profiles correctly
       const mentees = data.map(item => item.mentee) as Profile[];
-      console.log("Processed mentees:", mentees);
-      
       return mentees;
     },
     enabled: !!user?.id,
   });
 
-  const handleRequestUpdate = async (requestId: string, status: 'accepted' | 'declined') => {
-    updateRequestMutation.mutate(
-      { requestId, status },
-      {
-        onSuccess: async () => {
-          if (status === 'accepted') {
-            const request = mentorshipRequests?.find(r => r.id === requestId);
-            if (request) {
-              await supabase.from('messages').insert({
-                sender_id: user?.id,
-                receiver_id: request.mentee_id,
-                content: `Your mentorship request has been accepted! Welcome to the program.`
-              });
-            }
-            // Invalidate the accepted mentees query to refresh the list
-            queryClient.invalidateQueries({ queryKey: ['accepted-mentees'] });
-          }
-          
-          toast({
-            title: "Request Updated",
-            description: `Mentorship request ${status}`,
-          });
-        }
+  // Mutation to update the status of a mentorship request
+  const updateRequestMutation = useMutation({
+    mutationFn: async ({ id, status }: { id: string; status: string }) => {
+      if (status === "accepted") {
+        setIsAccepting(true);
+      } else {
+        setIsDeclining(true);
       }
-    );
+
+      const { error } = await supabase
+        .from("mentorship_requests")
+        .update({ status })
+        .eq("id", id);
+
+      if (error) throw error;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["mentorship-requests"] });
+      queryClient.invalidateQueries({ queryKey: ["accepted-mentees"] });
+
+      toast({
+        title: `Request ${variables.status}`,
+        description: `The mentorship request has been ${variables.status}.`,
+      });
+
+      setIsAccepting(false);
+      setIsDeclining(false);
+    },
+    onError: (error) => {
+      console.error("Error updating request:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update mentorship request.",
+        variant: "destructive",
+      });
+
+      setIsAccepting(false);
+      setIsDeclining(false);
+    },
+  });
+
+  const handleRequestUpdate = ({ id, status }: { id: string; status: string }) => {
+    updateRequestMutation.mutate({ id, status });
   };
 
   return {
+    mentorshipRequests,
+    requestsLoading,
     events,
+    eventsLoading,
     acceptedMentees,
     menteeLoading,
-    mentorshipRequests,
+    isAccepting,
+    isDeclining,
     handleRequestUpdate,
   };
 }
