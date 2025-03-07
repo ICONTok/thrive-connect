@@ -61,6 +61,8 @@
 /* Fix layout issues */
 body {
   overflow-x: hidden;
+  margin: 0;
+  padding: 0;
 }
 
 /* Improved Messages UI */
@@ -79,4 +81,47 @@ body {
 
 .icon-only-sidebar .sidebar-icon {
   margin-right: 0;
+}
+
+/* Standardized notification colors */
+.notification-badge {
+  background-color: #ff6384;
+  color: white;
+}
+
+/* Standardized highlight colors */
+.highlight-item {
+  color: #ff6384;
+}
+
+/* Collapsible sidebar improvements */
+[data-state="collapsed"] .sidebar-text,
+[data-state="collapsed"] .sidebar-label {
+  display: none;
+}
+
+[data-state="collapsed"] .sidebar-icon {
+  margin-right: 0;
+}
+
+/* Prevent horizontal overflow */
+.overflow-container {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+/* Standard action button colors */
+.action-button {
+  background-color: #ff6384;
+  color: white;
+}
+
+.action-button:hover {
+  background-color: #e05574;
+}
+
+/* Make sure main content uses full width */
+.main-content {
+  width: 100%;
+  max-width: 100%;
 }
