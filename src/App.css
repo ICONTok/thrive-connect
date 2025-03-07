@@ -125,3 +125,21 @@ body {
   width: 100%;
   max-width: 100%;
 }
+
+/* Ensure consistent color scheme across the app */
+.primary-color {
+  color: #ff6384;
+}
+
+.primary-bg {
+  background-color: #ff6384;
+}
+
+.primary-border {
+  border-color: #ff6384;
+}
+
+/* Remove unnecessary duplicate navigation */
+.duplicate-nav {
+  display: none;
+}

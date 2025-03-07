@@ -45,8 +45,8 @@ export function MainLayout({ children }: MainLayoutProps) {
             </div>
           </nav>
 
-          <div className="flex-1 w-full overflow-auto">
-            <div className="w-full h-full">{children}</div>
+          <div className="flex-1 w-full overflow-auto p-4">
+            {children}
           </div>
         </div>
       </div>

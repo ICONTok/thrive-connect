@@ -95,7 +95,7 @@ export function AppSidebar() {
                     <item.icon className={cn(
                       "h-5 w-5",
                       currentPath === item.url || currentPath.startsWith(item.url + '/')
-                        ? "text-primary"
+                        ? "text-[hsl(var(--primary))]"
                         : ""
                     )} />
                     <span className={cn(
