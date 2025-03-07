@@ -1,21 +1,40 @@
 
-import { ReactNode } from "react";
-import { useNavigate } from "react-router-dom";
+import { ReactNode, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Menu, Home, Users, MessageSquare, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AppSidebar } from "@/components/AppSidebar";
-import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { SidebarProvider, SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
 
 interface MainLayoutProps {
   children: ReactNode;
 }
+
+// This component controls sidebar state based on the current route
+const SidebarController = () => {
+  const { setOpen } = useSidebar();
+  const location = useLocation();
+  
+  useEffect(() => {
+    // Auto-collapse sidebar on these routes
+    const collapsibleRoutes = ['/messages', '/blog', '/connections'];
+    const shouldCollapse = collapsibleRoutes.some(route => location.pathname.startsWith(route));
+    
+    if (shouldCollapse) {
+      setOpen(false);
+    }
+  }, [location.pathname, setOpen]);
+  
+  return null;
+};
 
 export function MainLayout({ children }: MainLayoutProps) {
   const navigate = useNavigate();
 
   return (
     <SidebarProvider>
-      <div className="flex min-h-screen w-full">
+      <SidebarController />
+      <div className="flex min-h-screen w-full overflow-x-hidden">
         <AppSidebar />
         <div className="flex-1 flex flex-col w-full">
           <nav className="bg-white border-b px-4 sticky top-0 z-10 shadow-sm w-full">

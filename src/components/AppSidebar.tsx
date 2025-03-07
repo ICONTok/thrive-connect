@@ -4,9 +4,11 @@ import {
   SidebarContent,
   SidebarGroup,
   SidebarGroupContent,
+  SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  useSidebar
 } from "@/components/ui/sidebar";
 import {
   LayoutDashboard,
@@ -64,9 +66,11 @@ export function AppSidebar() {
   const navigate = useNavigate();
   const location = useLocation();
   const { signOut } = useAuth();
+  const { state } = useSidebar();
+  const isCollapsed = state === "collapsed";
 
   return (
-    <Sidebar>
+    <Sidebar collapsible={isCollapsed ? "icon" : "offcanvas"}>
       <SidebarContent>
         <div className="p-4">
           <img src="/placeholder.svg" alt="Logo" className="h-8" />
@@ -78,6 +82,7 @@ export function AppSidebar() {
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton
                     onClick={() => navigate(item.url)}
+                    tooltip={isCollapsed ? item.title : undefined}
                     className={cn(
                       "flex items-center space-x-2 px-4 py-2 w-full rounded-lg",
                       location.pathname === item.url
@@ -93,6 +98,7 @@ export function AppSidebar() {
               <SidebarMenuItem>
                 <SidebarMenuButton
                   onClick={() => signOut()}
+                  tooltip={isCollapsed ? "Sign Out" : undefined}
                   className="flex items-center space-x-2 px-4 py-2 w-full hover:bg-gray-100 rounded-lg text-red-600 mt-4"
                 >
                   <LogOut className="h-5 w-5" />
