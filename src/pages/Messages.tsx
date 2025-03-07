@@ -1,4 +1,3 @@
-
 import { useAuth } from "@/lib/auth";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -9,7 +8,6 @@ import { MainLayout } from "@/components/layout/MainLayout";
 import { useState, useEffect, useRef } from "react";
 import { Avatar } from "@/components/ui/avatar";
 import { Card } from "@/components/ui/card";
-import { Tooltip } from "@/components/ui/tooltip";
 import { 
   Search, 
   Phone, 
@@ -100,7 +98,7 @@ const Messages = () => {
             sender_id: user?.id,
             receiver_id: selectedContact.id,
             created_at: new Date(Date.now() - 82800000).toISOString(),
-            sender: { full_name: user?.full_name },
+            sender: { full_name: user?.user_metadata?.full_name || "You" },
             time_display: 'Yesterday 14:38 PM'
           },
           {
@@ -119,7 +117,7 @@ const Messages = () => {
             sender_id: user?.id,
             receiver_id: selectedContact.id,
             created_at: new Date().toISOString(),
-            sender: { full_name: user?.full_name },
+            sender: { full_name: user?.user_metadata?.full_name || "You" },
             time_display: 'Today 06:18 AM'
           }
         ];
