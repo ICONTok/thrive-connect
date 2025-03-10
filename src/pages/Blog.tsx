@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation, Routes, Route } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
@@ -7,7 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Plus, Edit, Trash, Search, Filter } from "lucide-react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { BlogPost } from "@/types/mentorship";
@@ -16,6 +17,7 @@ import BlogPostForm from "@/components/blog/BlogPostForm";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
+import { placeholderBlogPosts } from "@/lib/placeholderData";
 
 const BlogList = () => {
   const { user } = useAuth();
@@ -27,8 +29,9 @@ const BlogList = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [allCategories, setAllCategories] = useState<string[]>([]);
+  const [usePlaceholderData, setUsePlaceholderData] = useState(false);
 
-  const { data: posts, isLoading } = useQuery({
+  const { data: fetchedPosts, isLoading } = useQuery({
     queryKey: ['blog_posts'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -38,10 +41,27 @@ const BlogList = () => {
           author:profiles!blog_posts_author_id_fkey(full_name)
         `)
         .order('created_at', { ascending: false });
-      if (error) throw error;
+      
+      if (error) {
+        console.error("Error fetching posts:", error);
+        setUsePlaceholderData(true);
+        return [];
+      }
+      
+      // If no posts found in the database, use placeholder data
+      if (!data || data.length === 0) {
+        setUsePlaceholderData(true);
+        return [];
+      }
+      
       return data as BlogPost[];
     },
   });
+  
+  // Combine fetched posts with placeholder data when needed
+  const posts = usePlaceholderData || !fetchedPosts || fetchedPosts.length === 0 
+    ? placeholderBlogPosts 
+    : fetchedPosts;
 
   useEffect(() => {
     if (posts) {
@@ -59,6 +79,15 @@ const BlogList = () => {
 
   const createPostMutation = useMutation({
     mutationFn: async (data: { title: string; content: string; categories?: string }) => {
+      if (usePlaceholderData) {
+        // Simulate post creation with placeholder data
+        toast({
+          title: "Success",
+          description: "Post created successfully (demo mode)",
+        });
+        return;
+      }
+      
       const { error } = await supabase
         .from('blog_posts')
         .insert({
@@ -89,6 +118,15 @@ const BlogList = () => {
 
   const updatePostMutation = useMutation({
     mutationFn: async (data: { id: string; title: string; content: string; categories?: string }) => {
+      if (usePlaceholderData) {
+        // Simulate post update with placeholder data
+        toast({
+          title: "Success",
+          description: "Post updated successfully (demo mode)",
+        });
+        return;
+      }
+      
       const { error } = await supabase
         .from('blog_posts')
         .update({
@@ -119,6 +157,15 @@ const BlogList = () => {
 
   const deletePostMutation = useMutation({
     mutationFn: async (postId: string) => {
+      if (usePlaceholderData) {
+        // Simulate post deletion with placeholder data
+        toast({
+          title: "Success",
+          description: "Post deleted successfully (demo mode)",
+        });
+        return;
+      }
+      
       const { error } = await supabase
         .from('blog_posts')
         .delete()
@@ -246,9 +293,18 @@ const BlogList = () => {
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredPosts?.map((post) => (
-            <Card key={post.id} className="h-full flex flex-col">
+            <Card key={post.id} className="h-full flex flex-col overflow-hidden">
+              {post.image_url && (
+                <div className="aspect-video overflow-hidden">
+                  <img 
+                    src={post.image_url} 
+                    alt={post.title} 
+                    className="w-full h-full object-cover transition-transform hover:scale-105"
+                  />
+                </div>
+              )}
               <CardHeader>
                 <CardTitle className="line-clamp-2">{post.title}</CardTitle>
                 {post.categories && (
@@ -279,7 +335,7 @@ const BlogList = () => {
                 >
                   Read More
                 </Button>
-                {post.author_id === user?.id && (
+                {(post.author_id === user?.id || usePlaceholderData) && (
                   <div className="flex gap-2">
                     <Button 
                       variant="ghost" 

@@ -34,7 +34,9 @@ const App = () => (
               path="/"
               element={
                 <RequireAuth>
-                  <Index />
+                  <MainLayout>
+                    <Index />
+                  </MainLayout>
                 </RequireAuth>
               }
             />
@@ -59,7 +61,7 @@ const App = () => (
               }
             />
             <Route
-              path="/messages"
+              path="/messages/*"
               element={
                 <RequireAuth>
                   <MainLayout>
@@ -69,17 +71,15 @@ const App = () => (
               }
             />
             <Route
-              path="/blog"
+              path="/blog/*"
               element={
                 <RequireAuth>
-                  <MainLayout>
-                    <Blog />
-                  </MainLayout>
+                  <Blog />
                 </RequireAuth>
               }
             />
             <Route
-              path="/connections"
+              path="/connections/*"
               element={
                 <RequireAuth>
                   <MainLayout>

@@ -7,27 +7,38 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft } from "lucide-react";
 import { format } from "date-fns";
+import { placeholderBlogPosts } from "@/lib/placeholderData";
 
 const BlogPostDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   
-  const { data: post, isLoading } = useQuery({
+  const { data: fetchedPost, isLoading } = useQuery({
     queryKey: ['blog_post', id],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('blog_posts')
-        .select(`
-          *,
-          author:profiles!blog_posts_author_id_fkey(full_name)
-        `)
-        .eq('id', id)
-        .single();
-      
-      if (error) throw error;
-      return data as BlogPost;
+      try {
+        const { data, error } = await supabase
+          .from('blog_posts')
+          .select(`
+            *,
+            author:profiles!blog_posts_author_id_fkey(full_name)
+          `)
+          .eq('id', id)
+          .single();
+        
+        if (error) throw error;
+        return data as BlogPost;
+      } catch (error) {
+        console.error("Error fetching post:", error);
+        // Look for post in placeholder data
+        return null;
+      }
     },
   });
+  
+  // Try to find the post in placeholder data if not found in database
+  const placeholderPost = placeholderBlogPosts.find(post => post.id === id);
+  const post = fetchedPost || placeholderPost;
   
   if (isLoading) {
     return (
@@ -61,6 +72,15 @@ const BlogPostDetail = () => {
       </Button>
       
       <Card className="shadow-md">
+        {post.image_url && (
+          <div className="w-full aspect-video overflow-hidden">
+            <img 
+              src={post.image_url} 
+              alt={post.title} 
+              className="w-full h-full object-cover"
+            />
+          </div>
+        )}
         <CardHeader>
           <CardTitle className="text-3xl">{post.title}</CardTitle>
           <div className="flex justify-between text-sm text-gray-500">
@@ -72,7 +92,7 @@ const BlogPostDetail = () => {
             )}
           </div>
           {post.categories && (
-            <div className="flex gap-2 mt-2">
+            <div className="flex gap-2 mt-2 flex-wrap">
               {post.categories.split(',').map((category, index) => (
                 <span key={index} className="px-2 py-1 bg-primary/10 text-primary text-xs rounded-full">
                   {category.trim()}
