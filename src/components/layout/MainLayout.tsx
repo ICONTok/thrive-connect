@@ -1,6 +1,5 @@
-
 import { ReactNode, useEffect } from "react";
-import { useLocation, Link } from "react-router-dom";
+import { useLocation, Link, Outlet } from "react-router-dom";
 import { Menu, Users, MessageSquare, BookOpen } from "lucide-react";
 import { AppSidebar } from "@/components/AppSidebar";
 import { SidebarProvider, SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
@@ -9,13 +8,11 @@ interface MainLayoutProps {
   children: ReactNode;
 }
 
-// This component controls sidebar state based on the current route
 const SidebarController = () => {
   const { setOpen } = useSidebar();
   const location = useLocation();
   
   useEffect(() => {
-    // Auto-collapse sidebar on these routes
     const collapsibleRoutes = ['/messages', '/blog', '/connections'];
     const shouldCollapse = collapsibleRoutes.some(route => location.pathname.startsWith(route));
     
@@ -27,7 +24,7 @@ const SidebarController = () => {
   return null;
 };
 
-export function MainLayout({ children }: MainLayoutProps) {
+export function MainLayout() {
   const location = useLocation();
 
   return (
@@ -45,7 +42,6 @@ export function MainLayout({ children }: MainLayoutProps) {
                 <h1 className="text-xl font-bold text-gray-900">Thrive</h1>
               </div>
 
-              {/* Top navigation links */}
               <div className="ml-auto flex items-center space-x-6">
                 <Link 
                   to="/connections" 
@@ -73,7 +69,7 @@ export function MainLayout({ children }: MainLayoutProps) {
           </nav>
 
           <div className="flex-1 w-full overflow-auto p-4">
-            {children}
+            <Outlet />
           </div>
         </div>
       </div>

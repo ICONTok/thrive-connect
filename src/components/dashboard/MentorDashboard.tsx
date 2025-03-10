@@ -3,25 +3,36 @@ import { useMentorDashboard } from "@/hooks/use-mentor-dashboard";
 import { MenteesList } from "@/components/dashboard/MenteesList";
 import { EventsList } from "@/components/dashboard/EventsList";
 import { MentorshipRequests } from "@/components/dashboard/MentorshipRequests";
-import { useQueryClient } from "@tanstack/react-query";
+import { useAuth } from "@/lib/auth";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 export function MentorDashboard() {
-  const queryClient = useQueryClient();
+  const { user } = useAuth();
   const {
     events,
-    acceptedMentees,
-    menteeLoading,
     mentorshipRequests,
     handleRequestUpdate,
   } = useMentorDashboard();
 
-  const handleEventCreated = () => {
-    queryClient.invalidateQueries({ queryKey: ['mentor-events'] });
-  };
+  // Fetch accepted mentees from connections
+  const { data: acceptedMentees, isLoading: menteeLoading } = useQuery({
+    queryKey: ['accepted-mentees', user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('connections')
+        .select(`
+          user2:profiles!connections_user_id2_fkey(*)
+        `)
+        .eq('user_id1', user?.id)
+        .eq('status', 'accepted')
+        .eq('user2.user_type', 'mentee');
 
-  const onUpdateRequest = (requestId: string, status: 'accepted' | 'declined') => {
-    handleRequestUpdate({ id: requestId, status });
-  };
+      if (error) throw error;
+      return data?.map(connection => connection.user2) ?? [];
+    },
+    enabled: !!user?.id,
+  });
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full max-w-full">
@@ -30,16 +41,13 @@ export function MentorDashboard() {
           mentees={acceptedMentees} 
           isLoading={menteeLoading} 
         />
-        <EventsList 
-          events={events} 
-          onEventCreated={handleEventCreated} 
-        />
+        <EventsList events={events} />
       </div>
 
       <div className="w-full">
         <MentorshipRequests
           requests={mentorshipRequests}
-          onUpdateRequest={onUpdateRequest}
+          onUpdateRequest={handleRequestUpdate}
         />
       </div>
     </div>

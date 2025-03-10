@@ -30,66 +30,14 @@ const App = () => (
             <Route path="/auth" element={<Auth />} />
             <Route path="/auth/login" element={<Login />} />
             <Route path="/auth/register" element={<Register />} />
-            <Route
-              path="/"
-              element={
-                <RequireAuth>
-                  <MainLayout>
-                    <Index />
-                  </MainLayout>
-                </RequireAuth>
-              }
-            />
-            <Route
-              path="/mentor-signup"
-              element={
-                <RequireAuth>
-                  <MainLayout>
-                    <MentorSignup />
-                  </MainLayout>
-                </RequireAuth>
-              }
-            />
-            <Route
-              path="/mentee-signup"
-              element={
-                <RequireAuth>
-                  <MainLayout>
-                    <MenteeSignup />
-                  </MainLayout>
-                </RequireAuth>
-              }
-            />
-            <Route
-              path="/messages/*"
-              element={
-                <RequireAuth>
-                  <MainLayout>
-                    <Messages />
-                  </MainLayout>
-                </RequireAuth>
-              }
-            />
-            <Route
-              path="/blog/*"
-              element={
-                <RequireAuth>
-                  <MainLayout>
-                    <Blog />
-                  </MainLayout>
-                </RequireAuth>
-              }
-            />
-            <Route
-              path="/connections/*"
-              element={
-                <RequireAuth>
-                  <MainLayout>
-                    <Connections />
-                  </MainLayout>
-                </RequireAuth>
-              }
-            />
+            <Route path="/" element={<RequireAuth><MainLayout /></RequireAuth>}>
+              <Route index element={<Index />} />
+              <Route path="mentor-signup" element={<MentorSignup />} />
+              <Route path="mentee-signup" element={<MenteeDashboard />} />
+              <Route path="messages/*" element={<Messages />} />
+              <Route path="blog/*" element={<Blog />} />
+              <Route path="connections/*" element={<Connections />} />
+            </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
