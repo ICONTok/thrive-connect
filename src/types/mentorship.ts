@@ -1,4 +1,3 @@
-
 export interface Profile {
   id: string;
   full_name: string | null;
@@ -64,6 +63,7 @@ export interface BlogPost {
   author_id: string;
   created_at: string;
   updated_at: string;
+  image_url?: string;
   author: {
     full_name: string;
   };

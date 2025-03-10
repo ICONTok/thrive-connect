@@ -18,8 +18,7 @@ export const placeholderBlogPosts: BlogPost[] = [
     updated_at: "2023-06-20T10:30:00Z",
     categories: "UI/UX Design,User Experience,Interaction Design",
     author: {
-      full_name: "Alex Design",
-      id: "1",
+      full_name: "Alex Design"
     },
     image_url: "https://images.unsplash.com/photo-1518770660439-4636190af475"
   },
@@ -39,8 +38,7 @@ export const placeholderBlogPosts: BlogPost[] = [
     updated_at: "2023-06-17T14:15:00Z",
     categories: "Web Design,Sustainability,Development",
     author: {
-      full_name: "Jamie Eco",
-      id: "2",
+      full_name: "Jamie Eco"
     },
     image_url: "https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d"
   },
@@ -60,8 +58,7 @@ export const placeholderBlogPosts: BlogPost[] = [
     updated_at: "2023-05-29T09:45:00Z",
     categories: "UX Design,Sustainability,Digital Ethics",
     author: {
-      full_name: "Sam Green",
-      id: "3",
+      full_name: "Sam Green"
     },
     image_url: "https://images.unsplash.com/photo-1649972904349-6e44c42644a7"
   },
@@ -81,8 +78,7 @@ export const placeholderBlogPosts: BlogPost[] = [
     updated_at: "2023-05-15T16:20:00Z",
     categories: "Career Development,Mentorship,Professional Growth",
     author: {
-      full_name: "Jordan Mentor",
-      id: "4",
+      full_name: "Jordan Mentor"
     },
     image_url: "https://images.unsplash.com/photo-1488590528505-98d2b5aba04b"
   },
@@ -102,8 +98,7 @@ export const placeholderBlogPosts: BlogPost[] = [
     updated_at: "2023-04-10T11:05:00Z",
     categories: "AI,Software Development,Technology Trends",
     author: {
-      full_name: "Taylor Tech",
-      id: "5",
+      full_name: "Taylor Tech"
     },
     image_url: "https://images.unsplash.com/photo-1461749280684-dccba630e2f6"
   }
