@@ -5,7 +5,6 @@ import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { UserPlus, Check, X, UserCheck, Clock } from "lucide-react";
-import { MainLayout } from "@/components/layout/MainLayout";
 
 const Connections = () => {
   const { user } = useAuth();
@@ -157,73 +156,71 @@ const Connections = () => {
   };
 
   return (
-    <MainLayout>
-      <div className="w-full max-w-full px-0">
-        <h1 className="text-2xl font-bold mb-6">Connections</h1>
-        
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          <div className="lg:col-span-3">
-            <h2 className="font-semibold mb-4">Available Users</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {availableUsers?.filter(u => 
-                !connections?.some(c => 
-                  (c.user_id1 === u.id || c.user_id2 === u.id) && 
-                  c.status === 'accepted'
-                )
-              ).map((user) => (
-                <Card key={user.id} className="w-full">
+    <div className="w-full max-w-full px-0">
+      <h1 className="text-2xl font-bold mb-6">Connections</h1>
+      
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        <div className="lg:col-span-3">
+          <h2 className="font-semibold mb-4">Available Users</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {availableUsers?.filter(u => 
+              !connections?.some(c => 
+                (c.user_id1 === u.id || c.user_id2 === u.id) && 
+                c.status === 'accepted'
+              )
+            ).map((user) => (
+              <Card key={user.id} className="w-full">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="font-medium">{user.full_name}</h3>
+                      <p className="text-sm text-gray-500">{user.email}</p>
+                      <p className="text-sm text-blue-500 capitalize">{user.user_type}</p>
+                    </div>
+                    <Button
+                      onClick={() => handleConnect(user.id)}
+                      disabled={connections?.some(c => 
+                        ((c.user_id1 === user.id && c.user_id2 === user?.id) ||
+                         (c.user_id2 === user.id && c.user_id1 === user?.id)) &&
+                        c.status === 'pending'
+                      )}
+                    >
+                      <UserPlus className="h-4 w-4 mr-2" />
+                      Connect
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+
+        <div className="lg:col-span-1">
+          <h2 className="font-semibold mb-4">My Connections</h2>
+          <div className="space-y-4">
+            {connections?.map((connection) => {
+              const isUser1 = connection.user_id1 === user?.id;
+              const otherUser = isUser1 ? connection.user2 : connection.user1;
+
+              return (
+                <Card key={connection.id} className="w-full">
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between">
                       <div>
-                        <h3 className="font-medium">{user.full_name}</h3>
-                        <p className="text-sm text-gray-500">{user.email}</p>
-                        <p className="text-sm text-blue-500 capitalize">{user.user_type}</p>
+                        <h3 className="font-medium">{otherUser.full_name}</h3>
+                        <p className="text-sm text-gray-500">{otherUser.email}</p>
+                        <p className="text-sm text-blue-500 capitalize">{otherUser.user_type}</p>
                       </div>
-                      <Button
-                        onClick={() => handleConnect(user.id)}
-                        disabled={connections?.some(c => 
-                          ((c.user_id1 === user.id && c.user_id2 === user?.id) ||
-                           (c.user_id2 === user.id && c.user_id1 === user?.id)) &&
-                          c.status === 'pending'
-                        )}
-                      >
-                        <UserPlus className="h-4 w-4 mr-2" />
-                        Connect
-                      </Button>
+                      {renderConnectionStatus(connection)}
                     </div>
                   </CardContent>
                 </Card>
-              ))}
-            </div>
-          </div>
-
-          <div className="lg:col-span-1">
-            <h2 className="font-semibold mb-4">My Connections</h2>
-            <div className="space-y-4">
-              {connections?.map((connection) => {
-                const isUser1 = connection.user_id1 === user?.id;
-                const otherUser = isUser1 ? connection.user2 : connection.user1;
-
-                return (
-                  <Card key={connection.id} className="w-full">
-                    <CardContent className="p-4">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <h3 className="font-medium">{otherUser.full_name}</h3>
-                          <p className="text-sm text-gray-500">{otherUser.email}</p>
-                          <p className="text-sm text-blue-500 capitalize">{otherUser.user_type}</p>
-                        </div>
-                        {renderConnectionStatus(connection)}
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
               )}
-            </div>
+            )}
           </div>
         </div>
       </div>
-    </MainLayout>
+    </div>
   );
 };
 

@@ -74,7 +74,9 @@ const App = () => (
               path="/blog/*"
               element={
                 <RequireAuth>
-                  <Blog />
+                  <MainLayout>
+                    <Blog />
+                  </MainLayout>
                 </RequireAuth>
               }
             />
