@@ -1,7 +1,7 @@
 
 import { ReactNode, useEffect } from "react";
-import { useLocation } from "react-router-dom";
-import { Menu } from "lucide-react";
+import { useLocation, Link } from "react-router-dom";
+import { Menu, Users, MessageSquare, BookOpen } from "lucide-react";
 import { AppSidebar } from "@/components/AppSidebar";
 import { SidebarProvider, SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
 
@@ -28,6 +28,8 @@ const SidebarController = () => {
 };
 
 export function MainLayout({ children }: MainLayoutProps) {
+  const location = useLocation();
+
   return (
     <SidebarProvider>
       <SidebarController />
@@ -41,6 +43,31 @@ export function MainLayout({ children }: MainLayoutProps) {
                   <Menu className="h-6 w-6 text-gray-600" />
                 </SidebarTrigger>
                 <h1 className="text-xl font-bold text-gray-900">Thrive</h1>
+              </div>
+
+              {/* Top navigation links */}
+              <div className="ml-auto flex items-center space-x-6">
+                <Link 
+                  to="/connections" 
+                  className={`flex items-center space-x-1 text-sm font-medium ${location.pathname.startsWith('/connections') ? 'text-primary' : 'text-gray-600 hover:text-gray-900'}`}
+                >
+                  <Users className="h-4 w-4" />
+                  <span>Connections</span>
+                </Link>
+                <Link 
+                  to="/messages" 
+                  className={`flex items-center space-x-1 text-sm font-medium ${location.pathname.startsWith('/messages') ? 'text-primary' : 'text-gray-600 hover:text-gray-900'}`}
+                >
+                  <MessageSquare className="h-4 w-4" />
+                  <span>Messages</span>
+                </Link>
+                <Link 
+                  to="/blog" 
+                  className={`flex items-center space-x-1 text-sm font-medium ${location.pathname.startsWith('/blog') ? 'text-primary' : 'text-gray-600 hover:text-gray-900'}`}
+                >
+                  <BookOpen className="h-4 w-4" />
+                  <span>Blog</span>
+                </Link>
               </div>
             </div>
           </nav>

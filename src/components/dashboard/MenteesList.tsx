@@ -2,6 +2,8 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { UserCheck } from "lucide-react";
 import type { Profile } from "@/types/mentorship";
+import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 
 interface MenteesListProps {
   mentees: Profile[] | undefined;
@@ -9,10 +11,19 @@ interface MenteesListProps {
 }
 
 export function MenteesList({ mentees, isLoading }: MenteesListProps) {
+  const navigate = useNavigate();
+
   return (
     <Card>
-      <CardHeader>
+      <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle>My Mentees</CardTitle>
+        <Button 
+          variant="outline" 
+          size="sm"
+          onClick={() => navigate('/connections')}
+        >
+          View All
+        </Button>
       </CardHeader>
       <CardContent>
         {isLoading ? (
@@ -37,7 +48,9 @@ export function MenteesList({ mentees, isLoading }: MenteesListProps) {
                         </p>
                       )}
                     </div>
-                    <UserCheck className="text-green-500 h-5 w-5" />
+                    <div className="flex items-center">
+                      <UserCheck className="text-green-500 h-5 w-5" />
+                    </div>
                   </CardContent>
                 </Card>
               ))
