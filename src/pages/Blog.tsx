@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation, Routes, Route } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
@@ -10,7 +9,6 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Plus, Edit, Trash, Search, Filter } from "lucide-react";
-import { MainLayout } from "@/components/layout/MainLayout";
 import { BlogPost } from "@/types/mentorship";
 import BlogPostDetail from "@/components/blog/BlogPost";
 import BlogPostForm from "@/components/blog/BlogPostForm";
@@ -48,7 +46,6 @@ const BlogList = () => {
         return [];
       }
       
-      // If no posts found in the database, use placeholder data
       if (!data || data.length === 0) {
         setUsePlaceholderData(true);
         return [];
@@ -58,7 +55,6 @@ const BlogList = () => {
     },
   });
   
-  // Combine fetched posts with placeholder data when needed
   const posts = usePlaceholderData || !fetchedPosts || fetchedPosts.length === 0 
     ? placeholderBlogPosts 
     : fetchedPosts;
@@ -80,7 +76,6 @@ const BlogList = () => {
   const createPostMutation = useMutation({
     mutationFn: async (data: { title: string; content: string; categories?: string }) => {
       if (usePlaceholderData) {
-        // Simulate post creation with placeholder data
         toast({
           title: "Success",
           description: "Post created successfully (demo mode)",
@@ -119,7 +114,6 @@ const BlogList = () => {
   const updatePostMutation = useMutation({
     mutationFn: async (data: { id: string; title: string; content: string; categories?: string }) => {
       if (usePlaceholderData) {
-        // Simulate post update with placeholder data
         toast({
           title: "Success",
           description: "Post updated successfully (demo mode)",
@@ -158,7 +152,6 @@ const BlogList = () => {
   const deletePostMutation = useMutation({
     mutationFn: async (postId: string) => {
       if (usePlaceholderData) {
-        // Simulate post deletion with placeholder data
         toast({
           title: "Success",
           description: "Post deleted successfully (demo mode)",
@@ -397,12 +390,10 @@ const BlogList = () => {
 
 const BlogPage = () => {
   return (
-    <MainLayout>
-      <Routes>
-        <Route path="/" element={<BlogList />} />
-        <Route path="/:id" element={<BlogPostDetail />} />
-      </Routes>
-    </MainLayout>
+    <Routes>
+      <Route path="/" element={<BlogList />} />
+      <Route path="/:id" element={<BlogPostDetail />} />
+    </Routes>
   );
 };
 
