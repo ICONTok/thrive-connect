@@ -1,12 +1,12 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useAuth } from "@/lib/auth";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { MessageSquare, ThumbsUp, Share, Send } from "lucide-react";
 import { format } from "date-fns";
 
@@ -18,9 +18,9 @@ interface Comment {
   id: string;
   content: string;
   created_at: string;
+  user_id: string;
   user: {
     full_name: string;
-    email: string;
   };
 }
 
@@ -35,13 +35,12 @@ export function BlogInteractions({ postId }: BlogInteractionsProps) {
   const { data: likesCount = 0 } = useQuery({
     queryKey: ['blog-likes', postId],
     queryFn: async () => {
-      const { count, error } = await supabase
+      const { count } = await supabase
         .from('blog_interactions')
         .select('*', { count: 'exact', head: true })
         .eq('post_id', postId)
         .eq('type', 'like');
       
-      if (error) throw error;
       return count || 0;
     },
   });
@@ -52,7 +51,7 @@ export function BlogInteractions({ postId }: BlogInteractionsProps) {
     queryFn: async () => {
       if (!user?.id) return false;
       
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from('blog_interactions')
         .select('id')
         .eq('post_id', postId)
@@ -60,7 +59,6 @@ export function BlogInteractions({ postId }: BlogInteractionsProps) {
         .eq('type', 'like')
         .maybeSingle();
       
-      if (error) throw error;
       return !!data;
     },
     enabled: !!user?.id,
@@ -76,7 +74,8 @@ export function BlogInteractions({ postId }: BlogInteractionsProps) {
           id,
           content,
           created_at,
-          user:profiles!blog_interactions_user_id_fkey(full_name, email)
+          user_id,
+          user:profiles!blog_interactions_user_id_fkey(full_name)
         `)
         .eq('post_id', postId)
         .eq('type', 'comment')
@@ -87,7 +86,7 @@ export function BlogInteractions({ postId }: BlogInteractionsProps) {
     },
   });
 
-  // Toggle like mutation
+  // Add like mutation
   const toggleLikeMutation = useMutation({
     mutationFn: async () => {
       if (!user?.id) throw new Error("User not authenticated");
@@ -119,21 +118,12 @@ export function BlogInteractions({ postId }: BlogInteractionsProps) {
       queryClient.invalidateQueries({ queryKey: ['blog-likes', postId] });
       queryClient.invalidateQueries({ queryKey: ['blog-user-liked', postId, user?.id] });
     },
-    onError: (error) => {
-      console.error('Error toggling like:', error);
-      toast({
-        title: "Error",
-        description: "Failed to like/unlike post",
-        variant: "destructive",
-      });
-    },
   });
 
   // Add comment mutation
   const addCommentMutation = useMutation({
     mutationFn: async (content: string) => {
       if (!user?.id) throw new Error("User not authenticated");
-      if (!content.trim()) throw new Error("Comment cannot be empty");
       
       const { error } = await supabase
         .from('blog_interactions')
@@ -154,14 +144,6 @@ export function BlogInteractions({ postId }: BlogInteractionsProps) {
         description: "Comment added successfully",
       });
     },
-    onError: (error) => {
-      console.error('Error adding comment:', error);
-      toast({
-        title: "Error",
-        description: "Failed to add comment",
-        variant: "destructive",
-      });
-    },
   });
 
   // Handle share
@@ -173,8 +155,7 @@ export function BlogInteractions({ postId }: BlogInteractionsProps) {
           url: window.location.href,
         });
       } else {
-        // Fallback for browsers that don't support the Web Share API
-        navigator.clipboard.writeText(window.location.href);
+        await navigator.clipboard.writeText(window.location.href);
         toast({
           title: "Link copied",
           description: "Post link copied to clipboard",
@@ -250,7 +231,7 @@ export function BlogInteractions({ postId }: BlogInteractionsProps) {
               <div key={comment.id} className="flex gap-3 p-3 border rounded-md">
                 <Avatar>
                   <AvatarFallback>
-                    {comment.user.full_name.split(' ').map((n: string) => n[0]).join('')}
+                    {comment.user.full_name?.split(' ').map((n) => n[0]).join('')}
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex-1">
