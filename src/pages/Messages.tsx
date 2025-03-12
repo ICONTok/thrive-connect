@@ -1,3 +1,4 @@
+
 import { useAuth } from "@/lib/auth";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -5,7 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect, useRef } from "react";
-import { Avatar } from "@/components/ui/avatar";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Card } from "@/components/ui/card";
 import { 
   Search, 
@@ -19,6 +20,16 @@ import {
   Send,
   MoreVertical
 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { format } from "date-fns";
+import { EmojiPicker } from "@/components/ui/emoji-picker";
 
 const Messages = () => {
   const { user } = useAuth();
@@ -29,6 +40,9 @@ const Messages = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [sortBy, setSortBy] = useState("Latest First");
+  const [isEmojiPickerOpen, setIsEmojiPickerOpen] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
+  const [showSideProfile, setShowSideProfile] = useState(true);
 
   const { data: contacts } = useQuery({
     queryKey: ['contacts'],
@@ -126,6 +140,25 @@ const Messages = () => {
     contact.full_name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  const sortContacts = (contacts: any[]) => {
+    if (!contacts) return [];
+    
+    return [...contacts].sort((a, b) => {
+      if (sortBy === "Latest First") {
+        return b.unread - a.unread || (a.status === "Online" ? -1 : 1);
+      } else if (sortBy === "Oldest First") {
+        return a.unread - b.unread || (a.status === "Online" ? -1 : 1);
+      } else if (sortBy === "Name") {
+        return a.full_name.localeCompare(b.full_name);
+      } else if (sortBy === "Online") {
+        return a.status === "Online" ? -1 : 1;
+      }
+      return 0;
+    });
+  };
+
+  const sortedContacts = sortContacts(filteredContacts || []);
+
   useEffect(() => {
     const channel = supabase
       .channel('messages_channel')
@@ -156,6 +189,31 @@ const Messages = () => {
       setSelectedContact(contacts[0]);
     }
   }, [contacts, selectedContact]);
+
+  const markAsReadMutation = useMutation({
+    mutationFn: async () => {
+      if (!selectedContact || !user?.id) return;
+      
+      const { error } = await supabase
+        .from('messages')
+        .update({ read_at: new Date().toISOString() })
+        .eq('sender_id', selectedContact.id)
+        .eq('receiver_id', user.id)
+        .is('read_at', null);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['messages'] });
+    }
+  });
+
+  // When a contact is selected, mark their messages as read
+  useEffect(() => {
+    if (selectedContact) {
+      markAsReadMutation.mutate();
+    }
+  }, [selectedContact]);
 
   const sendMessageMutation = useMutation({
     mutationFn: async () => {
@@ -193,6 +251,89 @@ const Messages = () => {
     e.preventDefault();
     sendMessageMutation.mutate();
   };
+  
+  const handleAddEmoji = (emoji: string) => {
+    setMessageContent(prev => prev + emoji);
+    setIsEmojiPickerOpen(false);
+  };
+  
+  const handleStartRecording = () => {
+    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+      setIsRecording(true);
+      toast({
+        title: "Recording started",
+        description: "Voice recording in progress...",
+      });
+      
+      // In a real app, this would start actual recording
+      // For now, we'll just toggle the state and show a toast
+    } else {
+      toast({
+        title: "Recording not available",
+        description: "Your browser doesn't support voice recording",
+        variant: "destructive",
+      });
+    }
+  };
+  
+  const handleStopRecording = () => {
+    setIsRecording(false);
+    toast({
+      title: "Recording saved",
+      description: "Your voice message is ready to send",
+    });
+    
+    // In a real app, this would process and attach the recording
+  };
+  
+  const handleFileAttachment = () => {
+    // Create a file input and trigger it programmatically
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.accept = 'image/*,.pdf,.doc,.docx';
+    fileInput.onchange = (e) => {
+      const target = e.target as HTMLInputElement;
+      if (target.files?.[0]) {
+        const file = target.files[0];
+        toast({
+          title: "File attached",
+          description: `${file.name} is ready to send`,
+        });
+        
+        // In a real app, this would process the file and prepare it for sending
+      }
+    };
+    fileInput.click();
+  };
+  
+  const handleVideoCall = () => {
+    if (selectedContact) {
+      toast({
+        title: "Video call initiated",
+        description: `Starting a video call with ${selectedContact.full_name}...`,
+      });
+      
+      // In a real app, this would initiate a video call
+    }
+  };
+  
+  const handleVoiceCall = () => {
+    if (selectedContact) {
+      toast({
+        title: "Voice call initiated",
+        description: `Starting a voice call with ${selectedContact.full_name}...`,
+      });
+      
+      // In a real app, this would initiate a voice call
+    }
+  };
+  
+  const toggleSortBy = () => {
+    const options = ["Latest First", "Oldest First", "Name", "Online"];
+    const currentIndex = options.indexOf(sortBy);
+    const nextIndex = (currentIndex + 1) % options.length;
+    setSortBy(options[nextIndex]);
+  };
 
   return (
     <div className="flex h-full w-full overflow-hidden">
@@ -212,7 +353,10 @@ const Messages = () => {
         <div className="px-4 py-2 flex justify-between items-center border-b">
           <div className="flex items-center gap-2">
             <p className="text-sm text-gray-500">Sort By:</p>
-            <div className="flex items-center gap-1 cursor-pointer">
+            <div 
+              className="flex items-center gap-1 cursor-pointer" 
+              onClick={toggleSortBy}
+            >
               <span className="text-sm font-medium">{sortBy}</span>
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4"><path d="m6 9 6 6 6-6"/></svg>
             </div>
@@ -227,14 +371,24 @@ const Messages = () => {
         </div>
         
         <div className="flex justify-end p-3 border-b">
-          <Button variant="default" size="sm" className="rounded-full bg-red-500 hover:bg-red-600">
+          <Button 
+            variant="default" 
+            size="sm" 
+            className="rounded-full bg-red-500 hover:bg-red-600"
+            onClick={() => {
+              toast({
+                title: "New conversation",
+                description: "Create a new conversation feature coming soon",
+              });
+            }}
+          >
             <span>Add New</span>
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
           </Button>
         </div>
         
         <div className="flex-1 overflow-auto">
-          {filteredContacts?.map((contact) => (
+          {sortedContacts?.map((contact) => (
             <div
               key={contact.id}
               className={`flex p-4 border-b cursor-pointer transition-colors ${
@@ -249,6 +403,9 @@ const Messages = () => {
                     alt={contact.full_name} 
                     className="object-cover"
                   />
+                  <AvatarFallback>
+                    {contact.full_name?.split(' ').map((n: string) => n[0]).join('') || '?'}
+                  </AvatarFallback>
                 </Avatar>
                 <div className={`absolute -bottom-1 -right-1 w-3.5 h-3.5 border-2 border-white rounded-full ${contact.status === 'Online' ? 'bg-green-500' : 'bg-gray-300'}`}></div>
               </div>
@@ -284,6 +441,9 @@ const Messages = () => {
                   alt={selectedContact.full_name} 
                   className="object-cover"
                 />
+                <AvatarFallback>
+                  {selectedContact.full_name?.split(' ').map((n: string) => n[0]).join('') || '?'}
+                </AvatarFallback>
               </Avatar>
               <div>
                 <h3 className="font-medium">{selectedContact.full_name}</h3>
@@ -291,16 +451,40 @@ const Messages = () => {
               </div>
             </div>
             <div className="flex items-center space-x-3">
-              <Button variant="ghost" size="icon">
+              <Button 
+                variant="ghost" 
+                size="icon"
+                onClick={handleVoiceCall}
+              >
                 <Phone className="h-5 w-5 text-gray-500" />
               </Button>
-              <Button variant="ghost" size="icon">
+              <Button 
+                variant="ghost" 
+                size="icon"
+                onClick={handleVideoCall}
+              >
                 <Video className="h-5 w-5 text-gray-500" />
               </Button>
-              <Button variant="ghost" size="icon">
-                <MoreHorizontal className="h-5 w-5 text-gray-500" />
-              </Button>
-              <Button variant="ghost" size="icon">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon">
+                    <MoreHorizontal className="h-5 w-5 text-gray-500" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => setShowSideProfile(!showSideProfile)}>
+                    {showSideProfile ? "Hide" : "Show"} Profile
+                  </DropdownMenuItem>
+                  <DropdownMenuItem>Clear Chat</DropdownMenuItem>
+                  <DropdownMenuItem>Block Contact</DropdownMenuItem>
+                  <DropdownMenuItem>Report</DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+              <Button 
+                variant="ghost" 
+                size="icon"
+                onClick={() => setSelectedContact(null)}
+              >
                 <X className="h-5 w-5 text-gray-500" />
               </Button>
             </div>
@@ -339,7 +523,7 @@ const Messages = () => {
                   >
                     <p className="text-sm">{message.content}</p>
                     <div className={`text-right mt-1 ${message.sender_id === user?.id ? "text-red-200" : "text-gray-500"}`}>
-                      <span className="text-xs">{message.time_display || 'Today'}</span>
+                      <span className="text-xs">{message.time_display || format(new Date(message.created_at), "p")}</span>
                     </div>
                   </div>
                 )}
@@ -349,19 +533,30 @@ const Messages = () => {
           </div>
           
           <div className="flex items-center justify-center space-x-3 py-2 bg-white border-t">
-            <span className="text-2xl cursor-pointer">��</span>
-            <span className="text-2xl cursor-pointer">😃</span>
-            <span className="text-2xl cursor-pointer">👍</span>
-            <span className="text-2xl cursor-pointer">👆</span>
-            <span className="text-2xl cursor-pointer">👋</span>
-            <span className="text-2xl cursor-pointer">🙏</span>
-            <span className="text-2xl cursor-pointer">😎</span>
-            <span className="text-2xl cursor-pointer">👏</span>
-            <span className="text-2xl cursor-pointer">...</span>
+            <span className="text-2xl cursor-pointer" onClick={() => handleAddEmoji("😊")}>😊</span>
+            <span className="text-2xl cursor-pointer" onClick={() => handleAddEmoji("😃")}>😃</span>
+            <span className="text-2xl cursor-pointer" onClick={() => handleAddEmoji("👍")}>👍</span>
+            <span className="text-2xl cursor-pointer" onClick={() => handleAddEmoji("👆")}>👆</span>
+            <span className="text-2xl cursor-pointer" onClick={() => handleAddEmoji("👋")}>👋</span>
+            <span className="text-2xl cursor-pointer" onClick={() => handleAddEmoji("🙏")}>🙏</span>
+            <span className="text-2xl cursor-pointer" onClick={() => handleAddEmoji("😎")}>😎</span>
+            <span className="text-2xl cursor-pointer" onClick={() => handleAddEmoji("👏")}>👏</span>
+            <span 
+              className="text-2xl cursor-pointer"
+              onClick={() => setIsEmojiPickerOpen(!isEmojiPickerOpen)}
+            >
+              ...
+            </span>
           </div>
           
           <form onSubmit={handleSendMessage} className="p-3 border-t bg-white flex items-center space-x-2">
-            <Button type="button" variant="ghost" size="icon" className="text-gray-500">
+            <Button 
+              type="button" 
+              variant="ghost" 
+              size="icon" 
+              className="text-gray-500"
+              onClick={handleFileAttachment}
+            >
               <Paperclip className="h-5 w-5" />
             </Button>
             <div className="flex-1 relative">
@@ -371,11 +566,39 @@ const Messages = () => {
                 onChange={(e) => setMessageContent(e.target.value)}
                 className="pr-10 border-gray-300"
               />
-              <div className="absolute right-2 top-2.5 text-red-500">
+              <div 
+                className="absolute right-2 top-2.5 text-red-500" 
+                onClick={() => setIsEmojiPickerOpen(!isEmojiPickerOpen)}
+              >
                 <Smile className="h-5 w-5 cursor-pointer" />
               </div>
+              {isEmojiPickerOpen && (
+                <div className="absolute bottom-full right-0 mb-2 z-10">
+                  <Card className="p-2">
+                    <div className="grid grid-cols-8 gap-1">
+                      {["😊", "😃", "😂", "❤️", "👍", "🔥", "🎉", "✨", 
+                        "🤔", "😍", "🙌", "👏", "🤝", "👋", "🙏", "💯",
+                        "⭐", "💪", "🤞", "👌", "🎂", "🎁", "📷", "😎"].map(emoji => (
+                        <div 
+                          key={emoji} 
+                          className="text-2xl cursor-pointer hover:bg-gray-100 p-1 rounded"
+                          onClick={() => handleAddEmoji(emoji)}
+                        >
+                          {emoji}
+                        </div>
+                      ))}
+                    </div>
+                  </Card>
+                </div>
+              )}
             </div>
-            <Button type="button" variant="ghost" size="icon" className="text-gray-500">
+            <Button 
+              type="button" 
+              variant="ghost" 
+              size="icon" 
+              className={`text-gray-500 ${isRecording ? "text-red-500 animate-pulse" : ""}`}
+              onClick={isRecording ? handleStopRecording : handleStartRecording}
+            >
               <Mic className="h-5 w-5" />
             </Button>
             <Button 
@@ -394,10 +617,15 @@ const Messages = () => {
         </div>
       )}
       
-      {selectedContact && (
+      {selectedContact && showSideProfile && (
         <div className="w-[280px] border-l bg-white hidden lg:block">
           <div className="flex flex-col items-center p-6 border-b">
-            <Button variant="ghost" size="icon" className="self-end mb-2">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="self-end mb-2"
+              onClick={() => setShowSideProfile(false)}
+            >
               <X className="h-5 w-5 text-gray-500" />
             </Button>
             <div className="relative mb-4">
@@ -407,6 +635,9 @@ const Messages = () => {
                   alt={selectedContact.full_name} 
                   className="object-cover"
                 />
+                <AvatarFallback>
+                  {selectedContact.full_name?.split(' ').map((n: string) => n[0]).join('') || '?'}
+                </AvatarFallback>
               </Avatar>
             </div>
             <h2 className="text-xl font-bold">{selectedContact.full_name}</h2>

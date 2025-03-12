@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Plus, Edit, Trash, Search, Filter } from "lucide-react";
+import { Plus, Edit, Trash, Search, Filter, Award, Eye, ThumbsUp, MessageSquare, Gauge } from "lucide-react";
 import { BlogPost } from "@/types/mentorship";
 import BlogPostDetail from "@/components/blog/BlogPost";
 import BlogPostForm from "@/components/blog/BlogPostForm";
@@ -16,6 +16,13 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { placeholderBlogPosts } from "@/lib/placeholderData";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const BlogList = () => {
   const { user } = useAuth();
@@ -28,6 +35,7 @@ const BlogList = () => {
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [allCategories, setAllCategories] = useState<string[]>([]);
   const [usePlaceholderData, setUsePlaceholderData] = useState(false);
+  const [sortBy, setSortBy] = useState<string>("newest");
 
   const { data: fetchedPosts, isLoading } = useQuery({
     queryKey: ['blog_posts'],
@@ -53,6 +61,55 @@ const BlogList = () => {
       
       return data as BlogPost[];
     },
+  });
+
+  const { data: postMetrics = {} } = useQuery({
+    queryKey: ['blog_post_metrics'],
+    queryFn: async () => {
+      if (usePlaceholderData) return {};
+      
+      const { data, error } = await supabase
+        .from('blog_interactions')
+        .select(`
+          post_id,
+          type,
+          count
+        `)
+        .select('*', { count: 'exact', head: false });
+        
+      if (error) {
+        console.error("Error fetching post metrics:", error);
+        return {};
+      }
+      
+      const metrics: Record<string, { views: number; likes: number; comments: number; recommendations: number }> = {};
+      
+      data?.forEach(interaction => {
+        if (!interaction.post_id) return;
+        
+        if (!metrics[interaction.post_id]) {
+          metrics[interaction.post_id] = { views: 0, likes: 0, comments: 0, recommendations: 0 };
+        }
+        
+        switch (interaction.type) {
+          case 'view':
+            metrics[interaction.post_id].views++;
+            break;
+          case 'like':
+            metrics[interaction.post_id].likes++;
+            break;
+          case 'comment':
+            metrics[interaction.post_id].comments++;
+            break;
+          case 'recommend':
+            metrics[interaction.post_id].recommendations++;
+            break;
+        }
+      });
+      
+      return metrics;
+    },
+    enabled: !usePlaceholderData,
   });
   
   const posts = usePlaceholderData || !fetchedPosts || fetchedPosts.length === 0 
@@ -193,18 +250,50 @@ const BlogList = () => {
     );
   };
 
-  const filteredPosts = posts?.filter(post => {
-    const matchesSearch = 
-      post.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
-      post.content.toLowerCase().includes(searchQuery.toLowerCase());
+  const getSortedPosts = (posts: BlogPost[]) => {
+    if (!posts) return [];
     
-    const matchesCategory = selectedCategories.length === 0 || 
-      (post.categories && selectedCategories.some(category => 
-        post.categories?.toLowerCase().includes(category.toLowerCase())
-      ));
-    
-    return matchesSearch && matchesCategory;
-  });
+    return [...posts].sort((a, b) => {
+      const metricsA = postMetrics[a.id] || { views: 0, likes: 0, comments: 0, recommendations: 0 };
+      const metricsB = postMetrics[b.id] || { views: 0, likes: 0, comments: 0, recommendations: 0 };
+      
+      switch (sortBy) {
+        case "newest":
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+        case "oldest":
+          return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+        case "most-viewed":
+          return metricsB.views - metricsA.views;
+        case "most-liked":
+          return metricsB.likes - metricsA.likes;
+        case "most-commented":
+          return metricsB.comments - metricsA.comments;
+        case "most-recommended":
+          return metricsB.recommendations - metricsA.recommendations;
+        case "most-interactive":
+          const interactivityA = metricsA.likes + metricsA.comments + metricsA.recommendations;
+          const interactivityB = metricsB.likes + metricsB.comments + metricsB.recommendations;
+          return interactivityB - interactivityA;
+        default:
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      }
+    });
+  };
+
+  const filteredPosts = getSortedPosts(
+    posts?.filter(post => {
+      const matchesSearch = 
+        post.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
+        post.content.toLowerCase().includes(searchQuery.toLowerCase());
+      
+      const matchesCategory = selectedCategories.length === 0 || 
+        (post.categories && selectedCategories.some(category => 
+          post.categories?.toLowerCase().includes(category.toLowerCase())
+        ));
+      
+      return matchesSearch && matchesCategory;
+    }) || []
+  );
 
   return (
     <div className="w-full max-w-full px-0">
@@ -216,7 +305,7 @@ const BlogList = () => {
         </Button>
       </div>
 
-      <div className="flex items-center mb-6 space-x-4">
+      <div className="flex flex-col md:flex-row gap-4 mb-6">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
           <Input
@@ -226,6 +315,57 @@ const BlogList = () => {
             onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
+        
+        <Select 
+          value={sortBy} 
+          onValueChange={setSortBy}
+        >
+          <SelectTrigger className="w-[200px]">
+            <SelectValue placeholder="Sort by" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="newest">
+              <div className="flex items-center">
+                Newest First
+              </div>
+            </SelectItem>
+            <SelectItem value="oldest">
+              <div className="flex items-center">
+                Oldest First
+              </div>
+            </SelectItem>
+            <SelectItem value="most-viewed">
+              <div className="flex items-center">
+                <Eye className="h-4 w-4 mr-2" />
+                Most Viewed
+              </div>
+            </SelectItem>
+            <SelectItem value="most-liked">
+              <div className="flex items-center">
+                <ThumbsUp className="h-4 w-4 mr-2" />
+                Most Liked
+              </div>
+            </SelectItem>
+            <SelectItem value="most-commented">
+              <div className="flex items-center">
+                <MessageSquare className="h-4 w-4 mr-2" />
+                Most Commented
+              </div>
+            </SelectItem>
+            <SelectItem value="most-recommended">
+              <div className="flex items-center">
+                <Award className="h-4 w-4 mr-2" />
+                Most Recommended
+              </div>
+            </SelectItem>
+            <SelectItem value="most-interactive">
+              <div className="flex items-center">
+                <Gauge className="h-4 w-4 mr-2" />
+                Most Interactive
+              </div>
+            </SelectItem>
+          </SelectContent>
+        </Select>
         
         <Popover>
           <PopoverTrigger asChild>
@@ -287,68 +427,91 @@ const BlogList = () => {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredPosts?.map((post) => (
-            <Card key={post.id} className="h-full flex flex-col overflow-hidden">
-              {post.image_url && (
-                <div className="aspect-video overflow-hidden">
-                  <img 
-                    src={post.image_url} 
-                    alt={post.title} 
-                    className="w-full h-full object-cover transition-transform hover:scale-105"
-                  />
-                </div>
-              )}
-              <CardHeader>
-                <CardTitle className="line-clamp-2">{post.title}</CardTitle>
-                {post.categories && (
-                  <div className="flex flex-wrap gap-1 mt-1">
-                    {post.categories.split(',').map((category, index) => (
-                      <span key={index} className="px-2 py-0.5 bg-primary/10 text-primary text-xs rounded-full">
-                        {category.trim()}
-                      </span>
-                    ))}
+          {filteredPosts?.map((post) => {
+            const metrics = postMetrics[post.id] || { views: 0, likes: 0, comments: 0, recommendations: 0 };
+            
+            return (
+              <Card key={post.id} className="h-full flex flex-col overflow-hidden">
+                {post.image_url && (
+                  <div className="aspect-video overflow-hidden">
+                    <img 
+                      src={post.image_url} 
+                      alt={post.title} 
+                      className="w-full h-full object-cover transition-transform hover:scale-105"
+                    />
                   </div>
                 )}
-              </CardHeader>
-              <CardContent className="flex-grow">
-                <p className="text-sm text-gray-500 mb-2">
-                  By {post.author.full_name}
-                </p>
-                <div className="prose max-w-none line-clamp-3">
-                  <div dangerouslySetInnerHTML={{ 
-                    __html: post.content.replace(/<[^>]*>/g, ' ').substring(0, 150) + '...' 
-                  }} />
-                </div>
-              </CardContent>
-              <CardFooter className="justify-between border-t pt-4">
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={() => navigate(`/blog/${post.id}`)}
-                >
-                  Read More
-                </Button>
-                {(post.author_id === user?.id || usePlaceholderData) && (
-                  <div className="flex gap-2">
-                    <Button 
-                      variant="ghost" 
-                      size="icon"
-                      onClick={() => handleEditClick(post)}
-                    >
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    <Button 
-                      variant="ghost" 
-                      size="icon"
-                      onClick={() => deletePostMutation.mutate(post.id)}
-                    >
-                      <Trash className="h-4 w-4" />
-                    </Button>
+                <CardHeader>
+                  <CardTitle className="line-clamp-2">{post.title}</CardTitle>
+                  {post.categories && (
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {post.categories.split(',').map((category, index) => (
+                        <span key={index} className="px-2 py-0.5 bg-primary/10 text-primary text-xs rounded-full">
+                          {category.trim()}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </CardHeader>
+                <CardContent className="flex-grow">
+                  <p className="text-sm text-gray-500 mb-2">
+                    By {post.author.full_name}
+                  </p>
+                  <div className="prose max-w-none line-clamp-3">
+                    <div dangerouslySetInnerHTML={{ 
+                      __html: post.content.replace(/<[^>]*>/g, ' ').substring(0, 150) + '...' 
+                    }} />
                   </div>
-                )}
-              </CardFooter>
-            </Card>
-          ))}
+                  
+                  <div className="flex space-x-3 mt-4 text-xs text-gray-500">
+                    <div className="flex items-center">
+                      <Eye className="h-3 w-3 mr-1" /> 
+                      {metrics.views}
+                    </div>
+                    <div className="flex items-center">
+                      <ThumbsUp className="h-3 w-3 mr-1" /> 
+                      {metrics.likes}
+                    </div>
+                    <div className="flex items-center">
+                      <MessageSquare className="h-3 w-3 mr-1" /> 
+                      {metrics.comments}
+                    </div>
+                    <div className="flex items-center">
+                      <Award className="h-3 w-3 mr-1" /> 
+                      {metrics.recommendations}
+                    </div>
+                  </div>
+                </CardContent>
+                <CardFooter className="justify-between border-t pt-4">
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => navigate(`/blog/${post.id}`)}
+                  >
+                    Read More
+                  </Button>
+                  {(post.author_id === user?.id || usePlaceholderData) && (
+                    <div className="flex gap-2">
+                      <Button 
+                        variant="ghost" 
+                        size="icon"
+                        onClick={() => handleEditClick(post)}
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button 
+                        variant="ghost" 
+                        size="icon"
+                        onClick={() => deletePostMutation.mutate(post.id)}
+                      >
+                        <Trash className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  )}
+                </CardFooter>
+              </Card>
+            );
+          })}
         </div>
       )}
 
