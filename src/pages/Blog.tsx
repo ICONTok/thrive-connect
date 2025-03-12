@@ -70,12 +70,8 @@ const BlogList = () => {
       
       const { data, error } = await supabase
         .from('blog_interactions')
-        .select(`
-          post_id,
-          type,
-          count
-        `)
-        .select('*', { count: 'exact', head: false });
+        .select('*')
+        .is('post_id', null, { not: true });
         
       if (error) {
         console.error("Error fetching post metrics:", error);
@@ -216,6 +212,13 @@ const BlogList = () => {
         return;
       }
       
+      // First delete related interactions
+      await supabase
+        .from('blog_interactions')
+        .delete()
+        .eq('post_id', postId);
+        
+      // Then delete the post
       const { error } = await supabase
         .from('blog_posts')
         .delete()
@@ -229,7 +232,8 @@ const BlogList = () => {
         description: "Post deleted successfully",
       });
     },
-    onError: () => {
+    onError: (error) => {
+      console.error("Error deleting post:", error);
       toast({
         title: "Error",
         description: "Failed to delete post",
@@ -455,7 +459,7 @@ const BlogList = () => {
                 </CardHeader>
                 <CardContent className="flex-grow">
                   <p className="text-sm text-gray-500 mb-2">
-                    By {post.author.full_name}
+                    By {post.author?.full_name || 'Anonymous'}
                   </p>
                   <div className="prose max-w-none line-clamp-3">
                     <div dangerouslySetInnerHTML={{ 
@@ -502,7 +506,11 @@ const BlogList = () => {
                       <Button 
                         variant="ghost" 
                         size="icon"
-                        onClick={() => deletePostMutation.mutate(post.id)}
+                        onClick={() => {
+                          if (confirm("Are you sure you want to delete this post?")) {
+                            deletePostMutation.mutate(post.id);
+                          }
+                        }}
                       >
                         <Trash className="h-4 w-4" />
                       </Button>

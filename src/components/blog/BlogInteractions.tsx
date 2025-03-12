@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/lib/auth";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -166,6 +166,7 @@ export function BlogInteractions({ postId }: BlogInteractionsProps) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['blog-likes', postId] });
       queryClient.invalidateQueries({ queryKey: ['blog-user-liked', postId, user?.id] });
+      queryClient.invalidateQueries({ queryKey: ['blog_post_metrics'] });
     },
   });
 
@@ -200,6 +201,7 @@ export function BlogInteractions({ postId }: BlogInteractionsProps) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['blog-recommendations', postId] });
       queryClient.invalidateQueries({ queryKey: ['blog-user-recommended', postId, user?.id] });
+      queryClient.invalidateQueries({ queryKey: ['blog_post_metrics'] });
       
       if (!userRecommended) {
         toast({
@@ -229,6 +231,7 @@ export function BlogInteractions({ postId }: BlogInteractionsProps) {
     onSuccess: () => {
       setCommentContent("");
       queryClient.invalidateQueries({ queryKey: ['blog-comments', postId] });
+      queryClient.invalidateQueries({ queryKey: ['blog_post_metrics'] });
       toast({
         title: "Success",
         description: "Comment added successfully",
@@ -244,7 +247,7 @@ export function BlogInteractions({ postId }: BlogInteractionsProps) {
           .from('blog_interactions')
           .insert({
             post_id: postId,
-            user_id: user?.id,
+            user_id: user?.id || null,
             type: 'view',
           });
           
@@ -257,9 +260,9 @@ export function BlogInteractions({ postId }: BlogInteractionsProps) {
   });
 
   // Increment view count on component mount (only once per session)
-  useState(() => {
+  useEffect(() => {
     incrementViewMutation.mutate();
-  });
+  }, []);
 
   // Handle share
   const handleShare = async () => {
