@@ -1,6 +1,5 @@
 
 import { useAuth } from "@/lib/auth";
-import { MainLayout } from "@/components/layout/MainLayout";
 import { AdminDashboard } from "@/components/dashboard/AdminDashboard";
 import { MentorDashboard } from "@/components/dashboard/MentorDashboard";
 import { MenteeDashboard } from "@/components/dashboard/MenteeDashboard";
@@ -42,11 +41,9 @@ const Index = () => {
   };
 
   return (
-    <MainLayout>
-      <div className="w-full max-w-full">
-        {renderDashboard()}
-      </div>
-    </MainLayout>
+    <div className="w-full max-w-full">
+      {renderDashboard()}
+    </div>
   );
 };
 

@@ -16,6 +16,7 @@ import Blog from "./pages/Blog";
 import Connections from "./pages/Connections";
 import { AuthProvider, RequireAuth } from "./lib/auth";
 import { MainLayout } from "./components/layout/MainLayout";
+import { MenteeDashboard } from "./components/dashboard/MenteeDashboard";
 
 const queryClient = new QueryClient();
 
