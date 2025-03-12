@@ -8,6 +8,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { ArrowLeft } from "lucide-react";
 import { format } from "date-fns";
 import { placeholderBlogPosts } from "@/lib/placeholderData";
+import { BlogInteractions } from "./BlogInteractions";
 
 const BlogPostDetail = () => {
   const { id } = useParams();
@@ -105,6 +106,8 @@ const BlogPostDetail = () => {
           <div className="prose max-w-none">
             <div dangerouslySetInnerHTML={{ __html: post.content }} />
           </div>
+          
+          <BlogInteractions postId={post.id} />
         </CardContent>
         <CardFooter className="border-t pt-4 mt-4">
           <div className="text-sm text-gray-500">
