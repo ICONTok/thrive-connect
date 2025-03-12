@@ -30,7 +30,7 @@ export function UserConnectionCard({
             <div className="relative">
               <Avatar className="h-12 w-12">
                 <AvatarFallback>
-                  {user.full_name?.split(' ').map((n) => n[0]).join('')}
+                  {user.full_name?.split(' ').map((n) => n?.[0] || '').join('') || '?'}
                 </AvatarFallback>
               </Avatar>
               {isOnline && (
@@ -38,8 +38,8 @@ export function UserConnectionCard({
               )}
             </div>
             <div>
-              <h4 className="font-semibold">{user.full_name}</h4>
-              <p className="text-sm text-muted-foreground capitalize">{user.user_type}</p>
+              <h4 className="font-semibold">{user.full_name || 'Anonymous'}</h4>
+              <p className="text-sm text-muted-foreground capitalize">{user.user_type || 'User'}</p>
             </div>
           </div>
 

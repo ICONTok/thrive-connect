@@ -1,11 +1,13 @@
+
 import { useAuth } from "@/lib/auth";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { UserConnectionCard } from "@/components/UserConnectionCard";
+import { Profile } from "@/types/mentorship";
 
 const Connections = () => {
   const { user } = useAuth();
@@ -147,9 +149,25 @@ const Connections = () => {
   const acceptedConnections = connections?.filter(c => c.status === 'accepted')
     .map(c => {
       const isUser1 = c.user_id1 === user?.id;
+      const otherUser = isUser1 ? c.user2 : c.user1;
+      
+      // Type casting to ensure compatibility with Profile type
+      const typedProfile: Profile = {
+        id: otherUser.id,
+        full_name: otherUser.full_name,
+        email: otherUser.email,
+        user_type: (otherUser.user_type as "admin" | "mentor" | "mentee" | null),
+        is_active: otherUser.is_active ?? false,
+        role: (otherUser.role as "admin" | "mentor" | "mentee"),
+        expertise: otherUser.expertise,
+        interests: otherUser.interests,
+        goals: otherUser.goals,
+        years_of_experience: otherUser.years_of_experience
+      };
+      
       return {
         connection: c,
-        otherUser: isUser1 ? c.user2 : c.user1
+        otherUser: typedProfile
       };
     });
 
@@ -173,21 +191,37 @@ const Connections = () => {
           </div>
 
           <div className="grid grid-cols-1 gap-4">
-            {filteredUsers?.map((user) => (
-              <UserConnectionCard
-                key={user.id}
-                user={user}
-                onConnect={() => handleConnect(user.id)}
-                isConnected={connections?.some(c => 
-                  ((c.user_id1 === user.id && c.user_id2 === user?.id) ||
-                   (c.user_id2 === user.id && c.user_id1 === user?.id)) &&
-                  c.status === 'pending'
-                )}
-                isOnline={Math.random() > 0.5} // This should be replaced with actual online status
-                hasUnreadMessages={Math.random() > 0.7} // This should be replaced with actual message status
-                hasNewPosts={Math.random() > 0.8} // This should be replaced with actual post alerts
-              />
-            ))}
+            {filteredUsers?.map((user) => {
+              // Type casting to ensure compatibility with Profile type
+              const typedProfile: Profile = {
+                id: user.id,
+                full_name: user.full_name,
+                email: user.email,
+                user_type: (user.user_type as "admin" | "mentor" | "mentee" | null),
+                is_active: user.is_active ?? false,
+                role: (user.role as "admin" | "mentor" | "mentee"),
+                expertise: user.expertise,
+                interests: user.interests,
+                goals: user.goals,
+                years_of_experience: user.years_of_experience
+              };
+              
+              return (
+                <UserConnectionCard
+                  key={user.id}
+                  user={typedProfile}
+                  onConnect={() => handleConnect(user.id)}
+                  isConnected={connections?.some(c => 
+                    ((c.user_id1 === user.id && c.user_id2 === user?.id) ||
+                     (c.user_id2 === user.id && c.user_id1 === user?.id)) &&
+                    c.status === 'pending'
+                  )}
+                  isOnline={Math.random() > 0.5} // This should be replaced with actual online status
+                  hasUnreadMessages={Math.random() > 0.7} // This should be replaced with actual message status
+                  hasNewPosts={Math.random() > 0.8} // This should be replaced with actual post alerts
+                />
+              );
+            })}
           </div>
         </div>
 

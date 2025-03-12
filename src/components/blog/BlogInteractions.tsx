@@ -19,8 +19,8 @@ interface Comment {
   content: string;
   created_at: string;
   user_id: string;
-  user: {
-    full_name: string;
+  user_profile?: {
+    full_name: string | null;
   };
 }
 
@@ -65,7 +65,7 @@ export function BlogInteractions({ postId }: BlogInteractionsProps) {
   });
 
   // Get comments
-  const { data: comments = [] } = useQuery({
+  const { data: commentsData = [] } = useQuery({
     queryKey: ['blog-comments', postId],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -74,15 +74,31 @@ export function BlogInteractions({ postId }: BlogInteractionsProps) {
           id,
           content,
           created_at,
-          user_id,
-          user:profiles!blog_interactions_user_id_fkey(full_name)
+          user_id
         `)
         .eq('post_id', postId)
         .eq('type', 'comment')
         .order('created_at', { ascending: false });
       
       if (error) throw error;
-      return data as Comment[];
+      
+      // Fetch user profiles separately for each comment
+      const commentsWithProfiles = await Promise.all(
+        data.map(async (comment) => {
+          const { data: profileData } = await supabase
+            .from('profiles')
+            .select('full_name')
+            .eq('id', comment.user_id)
+            .single();
+            
+          return {
+            ...comment,
+            user_profile: profileData || { full_name: 'Anonymous' }
+          };
+        })
+      );
+      
+      return commentsWithProfiles as Comment[];
     },
   });
 
@@ -187,7 +203,7 @@ export function BlogInteractions({ postId }: BlogInteractionsProps) {
             onClick={() => setIsCommenting(!isCommenting)}
           >
             <MessageSquare className="h-5 w-5 mr-2" />
-            {comments.length} {comments.length === 1 ? 'Comment' : 'Comments'}
+            {commentsData.length} {commentsData.length === 1 ? 'Comment' : 'Comments'}
           </Button>
           
           <Button 
@@ -227,16 +243,16 @@ export function BlogInteractions({ postId }: BlogInteractionsProps) {
           )}
           
           <div className="space-y-3 mt-4">
-            {comments.map((comment) => (
+            {commentsData.map((comment) => (
               <div key={comment.id} className="flex gap-3 p-3 border rounded-md">
                 <Avatar>
                   <AvatarFallback>
-                    {comment.user.full_name?.split(' ').map((n) => n[0]).join('')}
+                    {comment.user_profile?.full_name?.split(' ').map((n) => n[0]).join('') || '?'}
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex-1">
                   <div className="flex justify-between">
-                    <h4 className="font-medium">{comment.user.full_name}</h4>
+                    <h4 className="font-medium">{comment.user_profile?.full_name || 'Anonymous'}</h4>
                     <p className="text-xs text-gray-500">
                       {format(new Date(comment.created_at), "MMM d, yyyy 'at' h:mm a")}
                     </p>
@@ -246,7 +262,7 @@ export function BlogInteractions({ postId }: BlogInteractionsProps) {
               </div>
             ))}
             
-            {comments.length === 0 && (
+            {commentsData.length === 0 && (
               <p className="text-center text-gray-500 py-4">No comments yet. Be the first to comment!</p>
             )}
           </div>
