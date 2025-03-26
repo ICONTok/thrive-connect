@@ -1,4 +1,3 @@
-
 import { useNavigate, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,7 +7,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { ArrowLeft } from "lucide-react";
 import { format } from "date-fns";
 import { placeholderBlogPosts } from "@/lib/placeholderData";
-import { BlogInteractions } from "./BlogInteractions";
+import { BlogInteractions } from "./interactions";
 
 const BlogPostDetail = () => {
   const { id } = useParams();
