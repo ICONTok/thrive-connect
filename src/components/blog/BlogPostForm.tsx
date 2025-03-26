@@ -1,11 +1,12 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { BlogPost } from "@/types/mentorship";
-import { Editor } from "@tinymce/tinymce-react";
 import { Textarea } from "@/components/ui/textarea";
+import ReactQuill from 'react-quill';
+import 'react-quill/dist/quill.snow.css';
 
 interface BlogPostFormProps {
   initialData?: Partial<BlogPost>;
@@ -23,6 +24,31 @@ const BlogPostForm = ({ initialData, onSubmit, onCancel, isSubmitting }: BlogPos
   
   // Use a simple editor state to track if we should fall back to basic textarea
   const [useBasicEditor, setUseBasicEditor] = useState(false);
+  const [editorLoaded, setEditorLoaded] = useState(false);
+
+  useEffect(() => {
+    // Set editor as loaded after component mounts
+    setEditorLoaded(true);
+  }, []);
+
+  const quillModules = {
+    toolbar: [
+      [{ 'header': [1, 2, 3, false] }],
+      ['bold', 'italic', 'underline', 'strike'],
+      [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+      [{ 'color': [] }, { 'background': [] }],
+      ['link', 'image'],
+      ['clean']
+    ],
+  };
+
+  const quillFormats = [
+    'header',
+    'bold', 'italic', 'underline', 'strike',
+    'list', 'bullet',
+    'color', 'background',
+    'link', 'image'
+  ];
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,57 +83,19 @@ const BlogPostForm = ({ initialData, onSubmit, onCancel, isSubmitting }: BlogPos
       
       <div>
         <Label htmlFor="content">Content</Label>
-        {!useBasicEditor ? (
+        {!useBasicEditor && editorLoaded ? (
           <div className="relative">
-            <Editor
-              apiKey="no-api-key"
-              initialValue={formData.content}
-              init={{
-                height: 400,
-                menubar: true,
-                plugins: [
-                  'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
-                  'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
-                  'insertdatetime', 'media', 'table', 'code', 'help', 'wordcount'
-                ],
-                toolbar: 'undo redo | blocks | ' +
-                  'bold italic forecolor | alignleft aligncenter ' +
-                  'alignright alignjustify | bullist numlist outdent indent | ' +
-                  'image media link | removeformat | help',
-                content_style: 'body { font-family:Helvetica,Arial,sans-serif; font-size:14px }',
-                // Allow local images in demo mode without API key
-                images_upload_handler: function (blobInfo, progress) {
-                  return new Promise((resolve, reject) => {
-                    const reader = new FileReader();
-                    reader.readAsDataURL(blobInfo.blob());
-                    reader.onloadend = function() {
-                      resolve(reader.result as string);
-                    };
-                    reader.onerror = function() {
-                      reject('Error reading file');
-                    };
-                  });
-                },
-                // Handle initialization error
-                setup: function (editor) {
-                  editor.on('init', function () {
-                    const warningElement = document.querySelector('.tox-notifications');
-                    if (warningElement) {
-                      warningElement.remove();
-                    }
-                  });
-                }
-              }}
-              onEditorChange={(content) => {
-                setFormData(prev => ({ ...prev, content }));
-              }}
-              onInit={(evt, editor) => {
-                // Check if initialization successful
-                if (!editor || editor.getContainer().querySelector('.tox-editor-header') === null) {
-                  setUseBasicEditor(true);
-                }
-              }}
-            />
+            <div className="border rounded-md border-input">
+              <ReactQuill
+                theme="snow"
+                value={formData.content}
+                onChange={(content) => setFormData(prev => ({ ...prev, content }))}
+                modules={quillModules}
+                formats={quillFormats}
+                placeholder="Write your post content here..."
+                style={{ height: '300px', marginBottom: '40px' }}
+              />
+            </div>
             <Button 
               type="button" 
               size="sm" 
@@ -119,14 +107,27 @@ const BlogPostForm = ({ initialData, onSubmit, onCancel, isSubmitting }: BlogPos
             </Button>
           </div>
         ) : (
-          <Textarea
-            id="content"
-            placeholder="Write your post content here..."
-            value={formData.content}
-            onChange={(e) => setFormData(prev => ({ ...prev, content: e.target.value }))}
-            className="min-h-[300px]"
-            required
-          />
+          <div className="relative">
+            <Textarea
+              id="content"
+              placeholder="Write your post content here..."
+              value={formData.content}
+              onChange={(e) => setFormData(prev => ({ ...prev, content: e.target.value }))}
+              className="min-h-[300px]"
+              required
+            />
+            {editorLoaded && (
+              <Button 
+                type="button" 
+                size="sm" 
+                variant="outline" 
+                className="absolute top-0 right-0 m-2"
+                onClick={() => setUseBasicEditor(false)}
+              >
+                Switch to Rich Editor
+              </Button>
+            )}
+          </div>
         )}
       </div>
       
