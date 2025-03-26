@@ -7,6 +7,7 @@ import { BlogPost } from "@/types/mentorship";
 import { Textarea } from "@/components/ui/textarea";
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
+import { useToast } from "@/hooks/use-toast";
 
 interface BlogPostFormProps {
   initialData?: Partial<BlogPost>;
@@ -16,6 +17,7 @@ interface BlogPostFormProps {
 }
 
 const BlogPostForm = ({ initialData, onSubmit, onCancel, isSubmitting }: BlogPostFormProps) => {
+  const { toast } = useToast();
   const [formData, setFormData] = useState({
     title: initialData?.title || "",
     content: initialData?.content || "",
@@ -52,9 +54,30 @@ const BlogPostForm = ({ initialData, onSubmit, onCancel, isSubmitting }: BlogPos
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.title.trim() || !formData.content.trim()) {
+    
+    // Validate form data
+    if (!formData.title.trim()) {
+      toast({
+        title: "Error",
+        description: "Post title is required",
+        variant: "destructive",
+      });
       return;
     }
+    
+    if (!formData.content.trim()) {
+      toast({
+        title: "Error",
+        description: "Post content is required",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Log the form data before submission
+    console.log("Submitting form data:", formData);
+    
+    // Submit the form data
     onSubmit(formData);
   };
 
@@ -136,7 +159,7 @@ const BlogPostForm = ({ initialData, onSubmit, onCancel, isSubmitting }: BlogPos
           Cancel
         </Button>
         <Button type="submit" disabled={isSubmitting}>
-          {initialData ? "Update" : "Create"}
+          {isSubmitting ? "Saving..." : (initialData ? "Update" : "Create")}
         </Button>
       </div>
     </form>

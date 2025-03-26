@@ -40,26 +40,36 @@ const BlogList = () => {
   const { data: fetchedPosts, isLoading } = useQuery({
     queryKey: ['blog_posts'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('blog_posts')
-        .select(`
-          *,
-          author:profiles!blog_posts_author_id_fkey(full_name)
-        `)
-        .order('created_at', { ascending: false });
-      
-      if (error) {
-        console.error("Error fetching posts:", error);
+      try {
+        console.log("Fetching blog posts...");
+        const { data, error } = await supabase
+          .from('blog_posts')
+          .select(`
+            *,
+            author:profiles!blog_posts_author_id_fkey(full_name)
+          `)
+          .order('created_at', { ascending: false });
+        
+        if (error) {
+          console.error("Error fetching posts:", error);
+          setUsePlaceholderData(true);
+          return [];
+        }
+        
+        console.log("Fetched posts:", data);
+        
+        if (!data || data.length === 0) {
+          console.log("No posts found, using placeholder data");
+          setUsePlaceholderData(true);
+          return [];
+        }
+        
+        return data as BlogPost[];
+      } catch (err) {
+        console.error("Exception while fetching posts:", err);
         setUsePlaceholderData(true);
         return [];
       }
-      
-      if (!data || data.length === 0) {
-        setUsePlaceholderData(true);
-        return [];
-      }
-      
-      return data as BlogPost[];
     },
   });
 
@@ -68,42 +78,46 @@ const BlogList = () => {
     queryFn: async () => {
       if (usePlaceholderData) return {};
       
-      const { data, error } = await supabase
-        .from('blog_interactions')
-        .select('*')
-        .is('post_id', null, { not: true });
+      try {
+        const { data, error } = await supabase
+          .from('blog_interactions')
+          .select('*');
+          
+        if (error) {
+          console.error("Error fetching post metrics:", error);
+          return {};
+        }
         
-      if (error) {
-        console.error("Error fetching post metrics:", error);
+        const metrics: Record<string, { views: number; likes: number; comments: number; recommendations: number }> = {};
+        
+        data?.forEach(interaction => {
+          if (!interaction.post_id) return;
+          
+          if (!metrics[interaction.post_id]) {
+            metrics[interaction.post_id] = { views: 0, likes: 0, comments: 0, recommendations: 0 };
+          }
+          
+          switch (interaction.type) {
+            case 'view':
+              metrics[interaction.post_id].views++;
+              break;
+            case 'like':
+              metrics[interaction.post_id].likes++;
+              break;
+            case 'comment':
+              metrics[interaction.post_id].comments++;
+              break;
+            case 'recommend':
+              metrics[interaction.post_id].recommendations++;
+              break;
+          }
+        });
+        
+        return metrics;
+      } catch (err) {
+        console.error("Exception while fetching post metrics:", err);
         return {};
       }
-      
-      const metrics: Record<string, { views: number; likes: number; comments: number; recommendations: number }> = {};
-      
-      data?.forEach(interaction => {
-        if (!interaction.post_id) return;
-        
-        if (!metrics[interaction.post_id]) {
-          metrics[interaction.post_id] = { views: 0, likes: 0, comments: 0, recommendations: 0 };
-        }
-        
-        switch (interaction.type) {
-          case 'view':
-            metrics[interaction.post_id].views++;
-            break;
-          case 'like':
-            metrics[interaction.post_id].likes++;
-            break;
-          case 'comment':
-            metrics[interaction.post_id].comments++;
-            break;
-          case 'recommend':
-            metrics[interaction.post_id].recommendations++;
-            break;
-        }
-      });
-      
-      return metrics;
     },
     enabled: !usePlaceholderData,
   });
@@ -136,16 +150,27 @@ const BlogList = () => {
         return;
       }
       
-      const { error } = await supabase
+      console.log("Creating post with data:", data);
+      const newPost = {
+        title: data.title,
+        content: data.content,
+        categories: data.categories,
+        author_id: user?.id,
+        status: 'published'
+      };
+      
+      const { data: createdPost, error } = await supabase
         .from('blog_posts')
-        .insert({
-          title: data.title,
-          content: data.content,
-          categories: data.categories,
-          author_id: user?.id,
-          status: 'published'
-        });
-      if (error) throw error;
+        .insert(newPost)
+        .select('*');
+        
+      if (error) {
+        console.error("Error creating post:", error);
+        throw error;
+      }
+      
+      console.log("Post created successfully:", createdPost);
+      return createdPost;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['blog_posts'] });
@@ -155,7 +180,8 @@ const BlogList = () => {
         description: "Post created successfully",
       });
     },
-    onError: () => {
+    onError: (error) => {
+      console.error("Mutation error:", error);
       toast({
         title: "Error",
         description: "Failed to create post",
