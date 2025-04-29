@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation, Routes, Route } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
@@ -150,11 +149,12 @@ const BlogList = () => {
   const createPostMutation = useMutation({
     mutationFn: async (data: { title: string; content: string; categories?: string }) => {
       if (usePlaceholderData) {
+        console.log("Creating post in placeholder mode");
         toast({
           title: "Success",
           description: "Post created successfully (demo mode)",
         });
-        return;
+        return { id: `placeholder-${Date.now()}` };
       }
       
       console.log("Creating post with data:", data);
@@ -166,10 +166,13 @@ const BlogList = () => {
         status: 'published'
       };
       
+      console.log("Sending post to Supabase:", newPost);
+      
       const { data: createdPost, error } = await supabase
         .from('blog_posts')
         .insert(newPost)
-        .select('*');
+        .select('*')
+        .single();
         
       if (error) {
         console.error("Error creating post:", error);
@@ -179,7 +182,8 @@ const BlogList = () => {
       console.log("Post created successfully:", createdPost);
       return createdPost;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log("Mutation success with data:", data);
       queryClient.invalidateQueries({ queryKey: ['blog_posts'] });
       setIsCreateDialogOpen(false);
       toast({
@@ -191,7 +195,7 @@ const BlogList = () => {
       console.error("Mutation error:", error);
       toast({
         title: "Error",
-        description: "Failed to create post",
+        description: "Failed to create post. Please try again.",
         variant: "destructive",
       });
     },
@@ -533,7 +537,7 @@ const BlogList = () => {
                   </Button>
                   
                   {/* Always show edit/delete buttons for placeholder data or if the user is the author */}
-                  {(usePlaceholderData || post.author_id === user?.id) && (
+                  {(usePlaceholderData || user) && (
                     <div className="flex gap-2">
                       <Button 
                         variant="ghost" 
@@ -580,6 +584,7 @@ const BlogList = () => {
           <BlogPostForm
             initialData={editingPost || undefined}
             onSubmit={(data) => {
+              console.log("Form submitted with data:", data);
               if (editingPost) {
                 updatePostMutation.mutate({ ...data, id: editingPost.id });
               } else {

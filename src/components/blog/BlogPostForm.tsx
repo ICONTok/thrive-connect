@@ -27,6 +27,7 @@ const BlogPostForm = ({ initialData, onSubmit, onCancel, isSubmitting }: BlogPos
   // Use a simple editor state to track if we should fall back to basic textarea
   const [useBasicEditor, setUseBasicEditor] = useState(false);
   const [editorLoaded, setEditorLoaded] = useState(false);
+  const [submitAttempted, setSubmitAttempted] = useState(false);
 
   useEffect(() => {
     // Set editor as loaded after component mounts
@@ -54,6 +55,7 @@ const BlogPostForm = ({ initialData, onSubmit, onCancel, isSubmitting }: BlogPos
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setSubmitAttempted(true);
     
     // Validate form data
     if (!formData.title.trim()) {
@@ -77,8 +79,24 @@ const BlogPostForm = ({ initialData, onSubmit, onCancel, isSubmitting }: BlogPos
     // Log the form data before submission
     console.log("Submitting form data:", formData);
     
-    // Submit the form data
-    onSubmit(formData);
+    try {
+      // Submit the form data
+      onSubmit(formData);
+      
+      // Show success toast regardless of backend success
+      // The actual success handling will be in the mutation
+      toast({
+        title: "Form submitted",
+        description: "Your post is being processed",
+      });
+    } catch (error) {
+      console.error("Error in form submission:", error);
+      toast({
+        title: "Error",
+        description: "There was a problem submitting your post. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -91,7 +109,11 @@ const BlogPostForm = ({ initialData, onSubmit, onCancel, isSubmitting }: BlogPos
           value={formData.title}
           onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
           required
+          className={submitAttempted && !formData.title.trim() ? "border-red-500" : ""}
         />
+        {submitAttempted && !formData.title.trim() && (
+          <p className="text-sm text-red-500 mt-1">Title is required</p>
+        )}
       </div>
       
       <div>
@@ -136,9 +158,12 @@ const BlogPostForm = ({ initialData, onSubmit, onCancel, isSubmitting }: BlogPos
               placeholder="Write your post content here..."
               value={formData.content}
               onChange={(e) => setFormData(prev => ({ ...prev, content: e.target.value }))}
-              className="min-h-[300px]"
+              className={`min-h-[300px] ${submitAttempted && !formData.content.trim() ? "border-red-500" : ""}`}
               required
             />
+            {submitAttempted && !formData.content.trim() && (
+              <p className="text-sm text-red-500 mt-1">Content is required</p>
+            )}
             {editorLoaded && (
               <Button 
                 type="button" 
