@@ -32,7 +32,10 @@ const BlogPostForm = ({ initialData, onSubmit, onCancel, isSubmitting }: BlogPos
   useEffect(() => {
     // Set editor as loaded after component mounts
     setEditorLoaded(true);
-  }, []);
+    
+    // Log initial form data for debugging
+    console.log("BlogPostForm initialized with data:", initialData);
+  }, [initialData]);
 
   const quillModules = {
     toolbar: [
@@ -80,15 +83,15 @@ const BlogPostForm = ({ initialData, onSubmit, onCancel, isSubmitting }: BlogPos
     console.log("Submitting form data:", formData);
     
     try {
-      // Submit the form data
-      onSubmit(formData);
+      // Create a formatted submission object
+      const submissionData = {
+        title: formData.title.trim(),
+        content: formData.content,
+        categories: formData.categories.trim(),
+      };
       
-      // Show success toast regardless of backend success
-      // The actual success handling will be in the mutation
-      toast({
-        title: "Form submitted",
-        description: "Your post is being processed",
-      });
+      // Submit the form data
+      onSubmit(submissionData);
     } catch (error) {
       console.error("Error in form submission:", error);
       toast({
@@ -99,6 +102,12 @@ const BlogPostForm = ({ initialData, onSubmit, onCancel, isSubmitting }: BlogPos
     }
   };
 
+  // Helper to update form data with proper validation
+  const updateFormField = (field: string, value: string) => {
+    console.log(`Updating ${field} field with value:`, value);
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
@@ -107,7 +116,7 @@ const BlogPostForm = ({ initialData, onSubmit, onCancel, isSubmitting }: BlogPos
           id="title"
           placeholder="Post title"
           value={formData.title}
-          onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+          onChange={(e) => updateFormField('title', e.target.value)}
           required
           className={submitAttempted && !formData.title.trim() ? "border-red-500" : ""}
         />
@@ -122,30 +131,28 @@ const BlogPostForm = ({ initialData, onSubmit, onCancel, isSubmitting }: BlogPos
           id="categories"
           placeholder="e.g. Leadership, Career, Mentoring"
           value={formData.categories}
-          onChange={(e) => setFormData(prev => ({ ...prev, categories: e.target.value }))}
+          onChange={(e) => updateFormField('categories', e.target.value)}
         />
       </div>
       
       <div>
         <Label htmlFor="content">Content</Label>
         {!useBasicEditor && editorLoaded ? (
-          <div className="relative">
-            <div className="border rounded-md border-input">
-              <ReactQuill
-                theme="snow"
-                value={formData.content}
-                onChange={(content) => setFormData(prev => ({ ...prev, content }))}
-                modules={quillModules}
-                formats={quillFormats}
-                placeholder="Write your post content here..."
-                style={{ height: '300px', marginBottom: '40px' }}
-              />
-            </div>
+          <div className="relative border rounded-md">
+            <ReactQuill
+              theme="snow"
+              value={formData.content}
+              onChange={(content) => updateFormField('content', content)}
+              modules={quillModules}
+              formats={quillFormats}
+              placeholder="Write your post content here..."
+              style={{ height: '300px', marginBottom: '40px' }}
+            />
             <Button 
               type="button" 
               size="sm" 
               variant="outline" 
-              className="absolute top-0 right-0 m-2"
+              className="absolute top-2 right-2"
               onClick={() => setUseBasicEditor(true)}
             >
               Switch to Basic Editor
@@ -157,7 +164,7 @@ const BlogPostForm = ({ initialData, onSubmit, onCancel, isSubmitting }: BlogPos
               id="content"
               placeholder="Write your post content here..."
               value={formData.content}
-              onChange={(e) => setFormData(prev => ({ ...prev, content: e.target.value }))}
+              onChange={(e) => updateFormField('content', e.target.value)}
               className={`min-h-[300px] ${submitAttempted && !formData.content.trim() ? "border-red-500" : ""}`}
               required
             />
@@ -169,7 +176,7 @@ const BlogPostForm = ({ initialData, onSubmit, onCancel, isSubmitting }: BlogPos
                 type="button" 
                 size="sm" 
                 variant="outline" 
-                className="absolute top-0 right-0 m-2"
+                className="absolute top-2 right-2"
                 onClick={() => setUseBasicEditor(false)}
               >
                 Switch to Rich Editor
@@ -179,11 +186,20 @@ const BlogPostForm = ({ initialData, onSubmit, onCancel, isSubmitting }: BlogPos
         )}
       </div>
       
-      <div className="flex justify-end gap-2">
-        <Button type="button" variant="outline" onClick={onCancel}>
+      <div className="flex justify-end gap-2 pt-4">
+        <Button 
+          type="button" 
+          variant="outline" 
+          onClick={onCancel}
+          disabled={isSubmitting}
+        >
           Cancel
         </Button>
-        <Button type="submit" disabled={isSubmitting}>
+        <Button 
+          type="submit" 
+          disabled={isSubmitting}
+          className="min-w-[100px]"
+        >
           {isSubmitting ? "Saving..." : (initialData ? "Update" : "Create")}
         </Button>
       </div>

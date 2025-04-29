@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation, Routes, Route } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
@@ -36,6 +37,11 @@ const BlogList = () => {
   const [allCategories, setAllCategories] = useState<string[]>([]);
   const [usePlaceholderData, setUsePlaceholderData] = useState(false);
   const [sortBy, setSortBy] = useState<string>("newest");
+
+  // Debug logging for auth status
+  useEffect(() => {
+    console.log("Auth state in Blog.tsx:", { user, isAuthenticated: !!user });
+  }, [user]);
 
   const { data: fetchedPosts, isLoading } = useQuery({
     queryKey: ['blog_posts'],
@@ -280,7 +286,15 @@ const BlogList = () => {
   });
 
   const handleEditClick = (post: BlogPost) => {
+    console.log("Edit button clicked for post:", post);
     setEditingPost(post);
+  };
+
+  const handleDeleteClick = (post: BlogPost) => {
+    console.log("Delete button clicked for post:", post);
+    if (confirm("Are you sure you want to delete this post?")) {
+      deletePostMutation.mutate(post.id);
+    }
   };
 
   const handleCategoryToggle = (category: string) => {
@@ -536,29 +550,25 @@ const BlogList = () => {
                     Read More
                   </Button>
                   
-                  {/* Always show edit/delete buttons for placeholder data or if the user is the author */}
-                  {(usePlaceholderData || user) && (
-                    <div className="flex gap-2">
-                      <Button 
-                        variant="ghost" 
-                        size="icon"
-                        onClick={() => handleEditClick(post)}
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button 
-                        variant="ghost" 
-                        size="icon"
-                        onClick={() => {
-                          if (confirm("Are you sure you want to delete this post?")) {
-                            deletePostMutation.mutate(post.id);
-                          }
-                        }}
-                      >
-                        <Trash className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  )}
+                  {/* Always show edit/delete buttons */}
+                  <div className="flex gap-2">
+                    <Button 
+                      variant="ghost" 
+                      size="icon"
+                      onClick={() => handleEditClick(post)}
+                      className="hover:bg-primary/10"
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                    <Button 
+                      variant="ghost" 
+                      size="icon"
+                      onClick={() => handleDeleteClick(post)}
+                      className="hover:bg-destructive/10"
+                    >
+                      <Trash className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </CardFooter>
               </Card>
             );
