@@ -12,7 +12,8 @@ const Index = () => {
   const renderDashboard = () => {
     if (!currentProfile) {
       console.log("No current profile found");
-      return null;
+      // Default to MenteeDashboard if no profile is found
+      return <MenteeDashboard />;
     }
 
     // Log the full profile for debugging
@@ -20,12 +21,6 @@ const Index = () => {
 
     // Ensure we're working with lowercase values
     const userType = currentProfile.user_type?.toLowerCase() as 'admin' | 'mentor' | 'mentee' | null;
-
-    // Add strict type checking
-    if (!userType) {
-      console.error("User type is not set!");
-      return null;
-    }
 
     // Add debug logging
     console.log("Rendering dashboard for user type:", userType);
@@ -37,6 +32,8 @@ const Index = () => {
     if (userType === 'mentor') {
       return <MentorDashboard />;
     }
+    
+    // Default to MenteeDashboard for any other case
     return <MenteeDashboard />;
   };
 

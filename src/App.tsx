@@ -16,7 +16,6 @@ import Blog from "./pages/Blog";
 import Connections from "./pages/Connections";
 import { AuthProvider, RequireAuth } from "./lib/auth";
 import { MainLayout } from "./components/layout/MainLayout";
-import { MenteeDashboard } from "./components/dashboard/MenteeDashboard";
 
 const queryClient = new QueryClient();
 
@@ -34,7 +33,7 @@ const App = () => (
             <Route path="/" element={<RequireAuth><MainLayout /></RequireAuth>}>
               <Route index element={<Index />} />
               <Route path="mentor-signup" element={<MentorSignup />} />
-              <Route path="mentee-signup" element={<MenteeDashboard />} />
+              <Route path="mentee-signup" element={<MenteeSignup />} />
               <Route path="messages/*" element={<Messages />} />
               <Route path="blog/*" element={<Blog />} />
               <Route path="connections/*" element={<Connections />} />

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation, Routes, Route } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
@@ -73,6 +74,7 @@ const BlogList = () => {
     },
   });
 
+  // Initialize postMetrics with a default empty object to avoid TypeScript errors
   const { data: postMetrics = {} } = useQuery({
     queryKey: ['blog_post_metrics'],
     queryFn: async () => {
@@ -125,6 +127,11 @@ const BlogList = () => {
   const posts = usePlaceholderData || !fetchedPosts || fetchedPosts.length === 0 
     ? placeholderBlogPosts 
     : fetchedPosts;
+
+  // Add a debug log for user information to check authorization
+  useEffect(() => {
+    console.log("Current user:", user);
+  }, [user]);
 
   useEffect(() => {
     if (posts) {
@@ -324,6 +331,10 @@ const BlogList = () => {
       return matchesSearch && matchesCategory;
     }) || []
   );
+  
+  // Debug log to check posts and user
+  console.log("Current posts:", posts);
+  console.log("User ID:", user?.id);
 
   return (
     <div className="w-full max-w-full px-0">
@@ -520,7 +531,9 @@ const BlogList = () => {
                   >
                     Read More
                   </Button>
-                  {(post.author_id === user?.id || usePlaceholderData) && (
+                  
+                  {/* Always show edit/delete buttons for placeholder data or if the user is the author */}
+                  {(usePlaceholderData || post.author_id === user?.id) && (
                     <div className="flex gap-2">
                       <Button 
                         variant="ghost" 
